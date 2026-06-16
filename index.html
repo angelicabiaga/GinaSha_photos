@@ -5,443 +5,220 @@
   <link rel="icon" type="image/png" href="favicon (1).png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Ginar &amp; Shannen — Wedding Gallery</title>
+
+  <!-- DNS prefetch for Supabase storage so image requests start earlier -->
+  <link rel="dns-prefetch" href="https://gbekmejcztnuulohjlxv.supabase.co">
+  <link rel="preconnect" href="https://gbekmejcztnuulohjlxv.supabase.co" crossorigin>
+
+  <!-- Fonts: swap so text renders immediately with fallback, font loads in background -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+
+  <!-- NO external JS libraries at all — replaced with native fetch() -->
+
   <style>
     :root {
-      --cream:   #faf6f1;
+      --cream:     #faf6f1;
       --parchment: #f2ebe0;
-      --blush:   #e8c5b4;
-      --rose:    #c47a5e;
-      --rose-dk: #a8614a;
-      --sage:    #6b7560;
-      --sage-lt: #8d9882;
-      --ink:     #2e2820;
-      --muted:   #8c7f74;
-      --line:    #e0d5c8;
-      --gold:    #b8976c;
-      --card:    rgba(255,253,249,0.96);
-      --r:       18px;
+      --blush:     #e8c5b4;
+      --rose:      #c47a5e;
+      --rose-dk:   #a8614a;
+      --sage:      #6b7560;
+      --sage-lt:   #8d9882;
+      --ink:       #2e2820;
+      --muted:     #8c7f74;
+      --line:      #e0d5c8;
+      --gold:      #b8976c;
+      --card:      rgba(255,253,249,0.96);
+      --r:         18px;
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-
     html, body {
       font-family: 'Jost', 'Helvetica Neue', sans-serif;
-      background: var(--cream);
-      color: var(--ink);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: var(--cream); color: var(--ink);
+      min-height: 100vh; overflow-x: hidden;
     }
-
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
+      content: ''; position: fixed; inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
 
+    /* ── Petals ── */
     .petals { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .petal {
-      position: absolute;
-      bottom: -30px;
-      width: 7px; height: 10px;
-      border-radius: 50% 0 50% 0;
-      opacity: 0;
-      animation: driftUp linear forwards;
-    }
+    .petal { position: absolute; bottom: -30px; width: 7px; height: 10px; border-radius: 50% 0 50% 0; opacity: 0; animation: driftUp linear forwards; }
     @keyframes driftUp {
-      0%   { transform: translateY(0) rotate(0deg) scale(0.8);   opacity: 0; }
+      0%   { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
       10%  { opacity: 0.35; }
       90%  { opacity: 0.2; }
       100% { transform: translateY(-110vh) rotate(200deg) scale(1); opacity: 0; }
     }
 
-    /* ── Music Player ── */
+    /* ── Music bar ── */
     .music-bar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 90;
-      background: rgba(46,40,32,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 10px 20px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+      background: rgba(46,40,32,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; gap: 14px; padding: 10px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .music-bar .track-info { flex: 1; min-width: 0; }
-    .music-bar .track-title {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 0.95rem; font-weight: 400; font-style: italic;
-      color: #f5ede4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .music-bar .track-artist {
-      font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--sage-lt); margin-top: 1px;
-    }
-    .music-btn {
-      background: none; border: 1.5px solid rgba(255,255,255,0.18); color: #f5ede4;
-      border-radius: 50%; width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 0.85rem; flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
-    }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 0.95rem; font-style: italic; color: #f5ede4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-lt); margin-top: 1px; }
+    .music-btn { background: none; border: 1.5px solid rgba(255,255,255,0.18); color: #f5ede4; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: background .15s, border-color .15s; }
     .music-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.35); }
     .music-btn.active { background: var(--rose); border-color: var(--rose); }
     .waveform { display: flex; align-items: center; gap: 2px; height: 18px; flex-shrink: 0; }
-    .waveform span {
-      display: block; width: 2.5px; background: var(--rose);
-      border-radius: 2px; animation: wave 0.9s ease-in-out infinite; opacity: 0.7;
-    }
-    .waveform span:nth-child(1) { animation-delay: 0s;    height: 6px; }
-    .waveform span:nth-child(2) { animation-delay: 0.15s; height: 12px; }
-    .waveform span:nth-child(3) { animation-delay: 0.3s;  height: 18px; }
-    .waveform span:nth-child(4) { animation-delay: 0.15s; height: 10px; }
-    .waveform span:nth-child(5) { animation-delay: 0s;    height: 5px; }
-    .waveform.paused span { animation-play-state: paused; opacity: 0.3; }
-    @keyframes wave {
-      0%, 100% { transform: scaleY(0.5); }
-      50%       { transform: scaleY(1); }
-    }
+    .waveform span { display: block; width: 2.5px; background: var(--rose); border-radius: 2px; animation: wave .9s ease-in-out infinite; opacity: .7; }
+    .waveform span:nth-child(1) { animation-delay: 0s; height: 6px; }
+    .waveform span:nth-child(2) { animation-delay: .15s; height: 12px; }
+    .waveform span:nth-child(3) { animation-delay: .3s; height: 18px; }
+    .waveform span:nth-child(4) { animation-delay: .15s; height: 10px; }
+    .waveform span:nth-child(5) { animation-delay: 0s; height: 5px; }
+    .waveform.paused span { animation-play-state: paused; opacity: .3; }
+    @keyframes wave { 0%,100% { transform: scaleY(.5); } 50% { transform: scaleY(1); } }
     .volume-wrap { display: flex; align-items: center; gap: 8px; }
-    .vol-icon { font-size: 0.8rem; color: var(--sage-lt); }
-    input[type=range].vol-slider {
-      -webkit-appearance: none; width: 60px; height: 3px;
-      background: rgba(255,255,255,0.2); border-radius: 2px; outline: none;
-    }
-    input[type=range].vol-slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 11px; height: 11px;
-      background: var(--rose); border-radius: 50%;
-    }
+    .vol-icon { font-size: .8rem; color: var(--sage-lt); }
+    input[type=range].vol-slider { -webkit-appearance: none; width: 60px; height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; outline: none; }
+    input[type=range].vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; background: var(--rose); border-radius: 50%; }
 
     /* ── Page ── */
     .page { max-width: 960px; margin: 0 auto; padding: 100px 18px 80px; position: relative; z-index: 1; }
 
-    /* ── Header ── */
+    /* ── Hero ── */
     .hero { text-align: center; padding: 40px 0 48px; }
     .hero-rule { display: flex; align-items: center; gap: 14px; justify-content: center; margin-bottom: 22px; }
     .hero-rule-line { flex: 1; max-width: 80px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
     .hero-rule-line.r { background: linear-gradient(90deg, var(--gold), transparent); }
     .hero-rule-diamond { width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); }
-    .eyebrow { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 400; }
-    .names {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: clamp(3rem, 12vw, 5.5rem); font-weight: 300;
-      line-height: 1; color: var(--sage); letter-spacing: -0.01em; margin: 14px 0 6px;
-    }
-    .names em { font-style: italic; color: var(--sage); }
-    .ampersand { font-style: italic; color: var(--sage); display: inline-block; transform: scale(1.2); }
-    .date-line { font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
+    .eyebrow { font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+    .names { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(3rem,12vw,5.5rem); font-weight: 300; line-height: 1; color: var(--sage); margin: 14px 0 6px; }
+    .names em { font-style: italic; }
+    .ampersand { font-style: italic; display: inline-block; transform: scale(1.2); }
+    .date-line { font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
 
-    /* ── Filters ── */
+    /* ── Chips ── */
     .controls { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; }
-    .chip {
-      border: 1px solid var(--line); background: transparent; color: var(--muted);
-      border-radius: 999px; padding: 8px 18px; font-family: 'Jost', sans-serif;
-      font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
-      cursor: pointer; transition: all 0.18s ease;
-    }
+    .chip { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 8px 18px; font-family: 'Jost', sans-serif; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: all .18s; }
     .chip:hover { border-color: var(--rose); color: var(--rose); }
     .chip.active { background: var(--ink); border-color: var(--ink); color: var(--cream); }
 
-    /* ── POV zone ── */
-    .pov-zone {
-      border: 1.5px dashed var(--line); border-radius: var(--r); padding: 22px;
-      text-align: center; cursor: pointer; margin-bottom: 20px;
-      background: rgba(255,253,249,0.6); transition: border-color 0.18s;
-    }
+    /* ── POV ── */
+    .pov-zone { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 22px; text-align: center; cursor: pointer; margin-bottom: 20px; background: rgba(255,253,249,.6); transition: border-color .18s; }
     .pov-zone:hover { border-color: var(--rose); }
     .pov-zone input { display: none; }
-    .pov-zone p { font-size: 0.88rem; color: var(--muted); }
-    .pov-msg { text-align: center; font-size: 0.82rem; margin-bottom: 14px; min-height: 18px; color: var(--muted); }
+    .pov-zone p { font-size: .88rem; color: var(--muted); }
+    .pov-msg { text-align: center; font-size: .82rem; margin-bottom: 14px; min-height: 18px; color: var(--muted); }
 
     /* ── Grid ── */
-    .loading-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.9rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.9rem; grid-column: 1 / -1; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: .9rem; grid-column: 1/-1; }
 
-    /* ── Skeleton loading cards ── */
-    .skeleton-card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.8);
-      border-radius: var(--r);
-      overflow: hidden;
-      box-shadow: 0 4px 18px rgba(46,40,32,0.07);
-    }
-    .skeleton-img {
-      width: 100%;
-      aspect-ratio: 4/5;
-      background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    .skeleton-info {
-      padding: 10px 14px 12px;
-      height: 38px;
-      background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite 0.2s;
-      border-top: 1px solid var(--line);
-    }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
+    /* ── Skeleton ── */
+    .skeleton-card { background: var(--card); border: 1px solid rgba(255,255,255,.8); border-radius: var(--r); overflow: hidden; box-shadow: 0 4px 18px rgba(46,40,32,.07); }
+    .skeleton-img { width: 100%; aspect-ratio: 4/5; background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    .skeleton-info { padding: 10px 14px 12px; height: 38px; background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite .2s; border-top: 1px solid var(--line); }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
     /* ── Photo card ── */
-    .photo-card {
-      background: var(--card); border: 1px solid rgba(255,255,255,0.8);
-      border-radius: var(--r); overflow: hidden;
-      box-shadow: 0 4px 18px rgba(46,40,32,0.07), 0 1px 3px rgba(46,40,32,0.04);
-      transition: transform 0.22s ease, box-shadow 0.22s ease;
-      /* fade in when ready */
-      opacity: 0;
-      animation: fadeCard 0.35s ease forwards;
-    }
-    @keyframes fadeCard {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .photo-card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 14px 36px rgba(46,40,32,0.12), 0 2px 6px rgba(46,40,32,0.06);
-    }
+    .photo-card { background: var(--card); border: 1px solid rgba(255,255,255,.8); border-radius: var(--r); overflow: hidden; box-shadow: 0 4px 18px rgba(46,40,32,.07), 0 1px 3px rgba(46,40,32,.04); transition: transform .22s, box-shadow .22s; opacity: 0; animation: fadeCard .3s ease forwards; }
+    @keyframes fadeCard { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+    .photo-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 14px 36px rgba(46,40,32,.12), 0 2px 6px rgba(46,40,32,.06); }
 
-    /* ── Image wrapper with blur-up technique ── */
-    .img-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4/5;
-      overflow: hidden;
-      background: var(--parchment);
-      cursor: pointer;
-    }
-    .img-wrap .thumb {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      filter: blur(12px);
-      transform: scale(1.05);
-      transition: opacity 0.3s ease;
-    }
-    .img-wrap .full {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
+    /* ── Blur-up image wrapper ── */
+    .img-wrap { position: relative; width: 100%; aspect-ratio: 4/5; overflow: hidden; background: var(--parchment); cursor: pointer; }
+    .img-wrap .thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(10px); transform: scale(1.05); transition: opacity .3s; }
+    .img-wrap .full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
     .img-wrap .full.loaded { opacity: 1; }
     .img-wrap .thumb.hidden { opacity: 0; }
-    .img-wrap video {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
+    .img-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-    .photo-card .info {
-      padding: 10px 14px 12px; display: flex; align-items: center;
-      justify-content: space-between; gap: 8px; border-top: 1px solid var(--line);
-    }
-    .photo-card .caption {
-      font-size: 0.78rem; letter-spacing: 0.04em; color: var(--muted);
-      flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-transform: uppercase;
-    }
+    .photo-card .info { padding: 10px 14px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); }
+    .photo-card .caption { font-size: .78rem; letter-spacing: .04em; color: var(--muted); flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-transform: uppercase; }
     .media-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-    .download-btn, .delete-btn {
-      border: none; background: none; cursor: pointer; color: var(--rose);
-      padding: 5px 8px; border-radius: 7px; font-family: 'Jost', sans-serif;
-      font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
-      font-weight: 500; line-height: 1; transition: background 0.15s; flex-shrink: 0;
-    }
+    .download-btn, .delete-btn { border: none; background: none; cursor: pointer; color: var(--rose); padding: 5px 8px; border-radius: 7px; font-family: 'Jost', sans-serif; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 500; line-height: 1; transition: background .15s; flex-shrink: 0; }
     .download-btn:hover, .delete-btn:hover { background: #f3e5dd; }
     .delete-btn { color: #b35449; }
 
-    /* ── Admin button ── */
-    .admin-toggle {
-      position: fixed; bottom: 24px; right: 20px; background: var(--ink);
-      color: rgba(255,253,249,0.9); border: none; border-radius: 999px; padding: 10px 20px;
-      font-family: 'Jost', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em;
-      text-transform: uppercase; cursor: pointer; box-shadow: 0 8px 24px rgba(46,40,32,0.25);
-      z-index: 50; transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .admin-toggle:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(46,40,32,0.3); }
+    /* ── Admin toggle ── */
+    .admin-toggle { position: fixed; bottom: 24px; right: 20px; background: var(--ink); color: rgba(255,253,249,.9); border: none; border-radius: 999px; padding: 10px 20px; font-family: 'Jost', sans-serif; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; box-shadow: 0 8px 24px rgba(46,40,32,.25); z-index: 50; transition: transform .15s, box-shadow .15s; }
+    .admin-toggle:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(46,40,32,.3); }
 
     /* ── Modals ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(30,24,18,0.75);
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px; z-index: 100; backdrop-filter: blur(4px);
-    }
-    .modal {
-      background: #fffcf8; border-radius: 22px; padding: 28px 24px 22px;
-      width: min(100%, 440px); max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 24px 60px rgba(30,24,18,0.2);
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(30,24,18,.75); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; backdrop-filter: blur(4px); }
+    .modal { background: #fffcf8; border-radius: 22px; padding: 28px 24px 22px; width: min(100%, 440px); max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(30,24,18,.2); }
     .modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 400; color: var(--sage); margin-bottom: 4px; }
-    .modal > p { font-size: 0.85rem; color: var(--muted); margin-bottom: 18px; }
-    .modal label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; margin-top: 14px; }
-    .modal input[type=text], .modal input[type=password], .modal select, .modal textarea {
-      width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 14px;
-      font-family: 'Jost', sans-serif; font-size: 0.88rem; color: var(--ink);
-      background: #fff; outline: none; transition: border-color 0.15s; resize: none;
-    }
-    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--rose); }
+    .modal > p { font-size: .85rem; color: var(--muted); margin-bottom: 18px; }
+    .modal label { display: block; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; margin-top: 14px; }
+    .modal input[type=text], .modal input[type=password], .modal select { width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 14px; font-family: 'Jost', sans-serif; font-size: .88rem; color: var(--ink); background: #fff; outline: none; transition: border-color .15s; }
+    .modal input:focus, .modal select:focus { border-color: var(--rose); }
     .password-wrap { position: relative; display: flex; align-items: center; }
     .password-wrap input { padding-right: 44px; }
-    .password-toggle {
-      position: absolute; right: 8px; width: 32px; height: 32px; border: none;
-      border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s;
-    }
+    .password-toggle { position: absolute; right: 8px; width: 32px; height: 32px; border: none; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
     .password-toggle:hover { background: var(--parchment); color: var(--rose); }
-    .password-toggle svg { width: 18px; height: 18px; stroke-width: 1.8; }
-    .upload-area {
-      border: 1.5px dashed var(--line); border-radius: 14px; padding: 20px; text-align: center;
-      cursor: pointer; margin-top: 12px; background: #fdf9f5; transition: border-color 0.15s;
-    }
+    .password-toggle svg { width: 18px; height: 18px; stroke-width: 1.8; fill: none; stroke: currentColor; }
+    .upload-area { border: 1.5px dashed var(--line); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; margin-top: 12px; background: #fdf9f5; transition: border-color .15s; }
     .upload-area:hover { border-color: var(--rose); }
     .upload-area input { display: none; }
-    .upload-area p { font-size: 0.85rem; color: var(--muted); }
+    .upload-area p { font-size: .85rem; color: var(--muted); }
     .file-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .file-tag { font-size: 0.72rem; background: var(--parchment); color: var(--muted); padding: 4px 10px; border-radius: 999px; }
-    .btn-primary {
-      width: 100%; border: none; border-radius: 999px; padding: 13px;
-      font-size: 0.88rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
-      font-family: 'Jost', sans-serif; color: #fff; background: var(--rose); cursor: pointer;
-      margin-top: 18px; transition: all 0.15s;
-    }
+    .file-tag { font-size: .72rem; background: var(--parchment); color: var(--muted); padding: 4px 10px; border-radius: 999px; }
+    .btn-primary { width: 100%; border: none; border-radius: 999px; padding: 13px; font-size: .88rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-family: 'Jost', sans-serif; color: #fff; background: var(--rose); cursor: pointer; margin-top: 18px; transition: all .15s; }
     .btn-primary:hover { background: var(--rose-dk); }
     .btn-primary:disabled { background: var(--blush); cursor: not-allowed; }
-    .btn-secondary {
-      width: 100%; border: 1.5px solid var(--line); border-radius: 999px; padding: 11px;
-      font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase;
-      font-family: 'Jost', sans-serif; color: var(--muted); background: transparent;
-      cursor: pointer; margin-top: 8px; transition: all 0.15s;
-    }
+    .btn-secondary { width: 100%; border: 1.5px solid var(--line); border-radius: 999px; padding: 11px; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; font-family: 'Jost', sans-serif; color: var(--muted); background: transparent; cursor: pointer; margin-top: 8px; transition: all .15s; }
     .btn-secondary:hover { border-color: var(--rose); color: var(--rose); }
-    .form-msg { font-size: 0.8rem; color: #cc786c; margin-top: 10px; min-height: 18px; }
+    .form-msg { font-size: .8rem; color: #cc786c; margin-top: 10px; min-height: 18px; }
     .form-msg.ok { color: #6e9a5e; }
     .progress-bar { height: 3px; background: var(--line); border-radius: 999px; margin-top: 14px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--rose); border-radius: 999px; transition: width 0.3s ease; }
+    .progress-fill { height: 100%; background: var(--rose); border-radius: 999px; transition: width .3s; }
 
-    /* ── Delete Modal ── */
-    .delete-modal-overlay {
-      position: fixed; inset: 0; background: rgba(30,24,18,0.8);
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px; z-index: 300; backdrop-filter: blur(6px);
-      animation: fadeInOverlay 0.18s ease;
-    }
-    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-    .delete-modal-box {
-      background: #fffcf8; border-radius: 22px; padding: 28px 24px 22px;
-      width: min(100%, 400px);
-      box-shadow: 0 32px 70px rgba(30,24,18,0.25);
-      animation: slideUp 0.2s ease;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(16px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-    .delete-modal-icon {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: #fdf3f2; display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
-    }
+    /* ── Delete modal ── */
+    .delete-modal-overlay { position: fixed; inset: 0; background: rgba(30,24,18,.8); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 300; backdrop-filter: blur(6px); animation: fadeInOverlay .18s ease; }
+    @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+    .delete-modal-box { background: #fffcf8; border-radius: 22px; padding: 28px 24px 22px; width: min(100%,400px); box-shadow: 0 32px 70px rgba(30,24,18,.25); animation: slideUp .2s ease; }
+    @keyframes slideUp { from { transform:translateY(16px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    .delete-modal-icon { width: 52px; height: 52px; border-radius: 50%; background: #fdf3f2; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
     .delete-modal-icon svg { width: 24px; height: 24px; stroke: #b35449; stroke-width: 1.8; fill: none; }
-    .delete-modal-box h2 {
-      font-family: 'Cormorant Garamond', serif; font-size: 1.55rem;
-      font-weight: 400; color: var(--ink); margin-bottom: 8px;
-    }
-    .delete-modal-box .dm-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.55; margin-bottom: 6px; }
-    .delete-modal-box .dm-warning {
-      font-size: 0.78rem; color: #b35449; background: #fdf3f2;
-      border: 1px solid rgba(179,84,73,0.2); border-radius: 10px;
-      padding: 10px 13px; margin: 14px 0 0; line-height: 1.5;
-    }
+    .delete-modal-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.55rem; font-weight: 400; color: var(--ink); margin-bottom: 8px; }
+    .delete-modal-box .dm-desc { font-size: .85rem; color: var(--muted); line-height: 1.55; }
+    .delete-modal-box .dm-warning { font-size: .78rem; color: #b35449; background: #fdf3f2; border: 1px solid rgba(179,84,73,.2); border-radius: 10px; padding: 10px 13px; margin: 14px 0 0; line-height: 1.5; }
     .dm-not-allowed .delete-modal-icon { background: #f5f2ee; }
     .dm-not-allowed .delete-modal-icon svg { stroke: var(--muted); }
     .dm-not-allowed h2 { color: var(--muted); }
     .delete-modal-actions { display: flex; gap: 8px; margin-top: 20px; }
-    .delete-modal-actions .btn-cancel {
-      flex: 1; border: 1.5px solid var(--line); border-radius: 999px; padding: 12px;
-      font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase;
-      font-family: 'Jost', sans-serif; color: var(--muted); background: transparent;
-      cursor: pointer; transition: all 0.15s;
-    }
+    .delete-modal-actions .btn-cancel { flex: 1; border: 1.5px solid var(--line); border-radius: 999px; padding: 12px; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; font-family: 'Jost', sans-serif; color: var(--muted); background: transparent; cursor: pointer; transition: all .15s; }
     .delete-modal-actions .btn-cancel:hover { border-color: var(--rose); color: var(--rose); }
-    .delete-modal-actions .btn-confirm-delete {
-      flex: 1; border: none; border-radius: 999px; padding: 12px;
-      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
-      font-family: 'Jost', sans-serif; color: #fff; background: #b35449;
-      cursor: pointer; transition: all 0.15s;
-    }
+    .delete-modal-actions .btn-confirm-delete { flex: 1; border: none; border-radius: 999px; padding: 12px; font-size: .82rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-family: 'Jost', sans-serif; color: #fff; background: #b35449; cursor: pointer; transition: all .15s; }
     .delete-modal-actions .btn-confirm-delete:hover:not(:disabled) { background: #973f36; }
     .delete-modal-actions .btn-confirm-delete:disabled { background: #d9a09a; cursor: not-allowed; }
-    .dm-msg { font-size: 0.78rem; color: #b35449; margin-top: 10px; min-height: 16px; }
+    .dm-msg { font-size: .78rem; color: #b35449; margin-top: 10px; min-height: 16px; }
 
     /* ── Lightbox ── */
-    .lightbox-overlay {
-      position: fixed; inset: 0; background: rgba(20,15,10,0.93);
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px; z-index: 200;
-    }
-    .lightbox-inner {
-      background: #fffcf8; border-radius: 20px; overflow: hidden;
-      width: min(100%, 540px); box-shadow: 0 32px 80px rgba(0,0,0,0.4);
-    }
-    .lightbox-inner img, .lightbox-inner video {
-      width: 100%; display: block; max-height: 72vh; object-fit: contain; background: #111;
-    }
-    .lb-foot {
-      padding: 12px 18px 16px; display: flex; justify-content: space-between;
-      align-items: center; gap: 8px; border-top: 1px solid var(--line);
-    }
-    .lb-foot span { font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 1; }
+    .lightbox-overlay { position: fixed; inset: 0; background: rgba(20,15,10,.93); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 200; }
+    .lightbox-inner { background: #fffcf8; border-radius: 20px; overflow: hidden; width: min(100%,540px); box-shadow: 0 32px 80px rgba(0,0,0,.4); }
+    .lightbox-inner img, .lightbox-inner video { width: 100%; display: block; max-height: 72vh; object-fit: contain; background: #111; }
+    .lb-foot { padding: 12px 18px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--line); }
+    .lb-foot span { font-size: .82rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); flex: 1; }
     .lb-actions { display: flex; align-items: center; gap: 6px; }
-    .lb-btn {
-      border: 1px solid var(--line); background: none; cursor: pointer; color: var(--muted);
-      font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500;
-      padding: 6px 11px; border-radius: 8px; transition: background 0.15s, color 0.15s;
-    }
+    .lb-btn { border: 1px solid var(--line); background: none; cursor: pointer; color: var(--muted); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 500; padding: 6px 11px; border-radius: 8px; transition: background .15s, color .15s; }
     .lb-btn:hover { background: var(--parchment); color: var(--ink); }
-    .lb-btn.delete { color: #b35449; border-color: rgba(179,84,73,0.35); }
+    .lb-btn.delete { color: #b35449; border-color: rgba(179,84,73,.35); }
     .lb-btn.delete:hover { background: #fdf3f2; color: #973f36; }
     .lb-btn.close { width: 32px; height: 32px; padding: 0; font-size: 1rem; line-height: 1; }
 
-    @media (min-width: 600px) {
-      .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
-      .volume-wrap { display: flex; }
-    }
-    @media (max-width: 480px) {
-      .volume-wrap { display: none; }
-      .names { letter-spacing: -0.02em; }
-    }
+    @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); } .volume-wrap { display: flex; } }
+    @media (max-width: 480px) { .volume-wrap { display: none; } .names { letter-spacing: -.02em; } }
   </style>
 </head>
 <body>
 
 <div class="petals" id="petals"></div>
+<audio id="bgMusic" loop><source src="song.mp3" type="audio/mpeg"></audio>
 
-<audio id="bgMusic" loop>
-  <source src="song.mp3" type="audio/mpeg">
-</audio>
-
-<div class="music-bar" id="musicBar">
-  <div class="waveform" id="waveform">
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
+<div class="music-bar">
+  <div class="waveform" id="waveform"><span></span><span></span><span></span><span></span><span></span></div>
   <div class="track-info">
     <div class="track-title">Shut up and Dance</div>
     <div class="track-artist">WALK THE MOON</div>
@@ -456,14 +233,10 @@
 <main class="page">
   <header class="hero">
     <div class="hero-rule">
-      <div class="hero-rule-line"></div>
-      <div class="hero-rule-diamond"></div>
-      <div class="hero-rule-line r"></div>
+      <div class="hero-rule-line"></div><div class="hero-rule-diamond"></div><div class="hero-rule-line r"></div>
     </div>
     <div class="eyebrow">Wedding Gallery</div>
-    <h1 class="names">
-      <em>Ginar</em> <span class="ampersand">&amp;</span> <em>Shannen</em>
-    </h1>
+    <h1 class="names"><em>Ginar</em> <span class="ampersand">&amp;</span> <em>Shannen</em></h1>
     <p class="date-line">View &amp; share our memories</p>
   </header>
 
@@ -483,7 +256,6 @@
     <div class="pov-msg" id="povMsg"></div>
   </div>
 
-  <div id="loadingState" class="loading-state" style="display:none;"></div>
   <div class="grid" id="photoGrid"></div>
 </main>
 
@@ -500,7 +272,8 @@
         <div class="password-wrap">
           <input type="password" id="adminPasswordInput" placeholder="Admin password" />
           <button class="password-toggle" id="passwordToggleBtn" type="button" aria-label="Show password">
-            <i data-lucide="eye"></i>
+            <!-- Eye icon inline — no Lucide library needed -->
+            <svg id="eyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
         <div class="form-msg" id="loginMsg"></div>
@@ -534,18 +307,18 @@
   </div>
 </div>
 
-<!-- Delete Modal -->
+<!-- Delete modal -->
 <div id="deleteModal" style="display:none;">
   <div class="delete-modal-overlay" id="deleteOverlay">
     <div class="delete-modal-box" id="deleteModalBox">
-      <div class="delete-modal-icon" id="deleteModalIcon">
+      <div class="delete-modal-icon">
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       </div>
       <h2 id="deleteModalTitle">Delete this photo?</h2>
-      <p class="dm-desc" id="deleteModalDesc">This will permanently remove the file from the gallery and storage. This action cannot be undone.</p>
+      <p class="dm-desc" id="deleteModalDesc"></p>
       <div id="deleteModalWarning" class="dm-warning" style="display:none;"></div>
       <div class="dm-msg" id="deleteModalMsg"></div>
-      <div class="delete-modal-actions" id="deleteModalActions">
+      <div class="delete-modal-actions">
         <button class="btn-cancel" id="deleteCancelBtn">Cancel</button>
         <button class="btn-confirm-delete" id="deleteConfirmBtn">Yes, delete</button>
       </div>
@@ -571,469 +344,440 @@
 </div>
 
 <script>
-  // ── Supabase config ──
-  const SUPABASE_URL      = "https://gbekmejcztnuulohjlxv.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZWttZWpjenRudXVsb2hqbHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MjcxMDQsImV4cCI6MjA5NzEwMzEwNH0.IQKyqxCPZSp5JOpTp53iBDoIlaj_Yy8OBS_2G5S6nMg";
-  const STORAGE_BUCKET    = "wedding-photos";
-  const ADMIN_PASS        = "GinaSha123!!";
+// ── Config ──
+const SB_URL    = "https://gbekmejcztnuulohjlxv.supabase.co";
+const SB_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZWttZWpjenRudXVsb2hqbHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MjcxMDQsImV4cCI6MjA5NzEwMzEwNH0.IQKyqxCPZSp5JOpTp53iBDoIlaj_Yy8OBS_2G5S6nMg";
+const BUCKET    = "wedding-photos";
+const ADMIN_PW  = "GinaSha123!!";
+const CACHE_KEY = "gs_photos_v1"; // bump suffix to invalidate cache
 
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ── Lightweight Supabase REST helpers (replaces 270KB SDK) ──
+const sbHeaders = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
 
-  let photos = [], currentFilter = "all", isAdminLoggedIn = false, pendingFiles = [], currentLbItem = null, pendingDeleteItem = null;
-  let myUploads     = JSON.parse(localStorage.getItem("my_uploaded_photos") || "[]");
-  let myUploadPaths = JSON.parse(localStorage.getItem("my_uploaded_photo_paths") || "[]");
-
-  // ── DOM refs ──
-  const grid               = document.getElementById("photoGrid");
-  const loadingState       = document.getElementById("loadingState");
-  const filtersEl          = document.getElementById("filters");
-  const povSection         = document.getElementById("povSection");
-  const povZone            = document.getElementById("povZone");
-  const povInput           = document.getElementById("povInput");
-  const povMsg             = document.getElementById("povMsg");
-  const adminToggleBtn     = document.getElementById("adminToggleBtn");
-  const adminModal         = document.getElementById("adminModal");
-  const adminLoginView     = document.getElementById("adminLoginView");
-  const adminUploadView    = document.getElementById("adminUploadView");
-  const adminPasswordInput = document.getElementById("adminPasswordInput");
-  const passwordToggleBtn  = document.getElementById("passwordToggleBtn");
-  const adminLoginBtn      = document.getElementById("adminLoginBtn");
-  const adminCancelBtn     = document.getElementById("adminCancelBtn");
-  const loginMsg           = document.getElementById("loginMsg");
-  const uploadCategory     = document.getElementById("uploadCategory");
-  const uploadCaption      = document.getElementById("uploadCaption");
-  const adminFileInput     = document.getElementById("adminFileInput");
-  const filePreview        = document.getElementById("filePreview");
-  const doUploadBtn        = document.getElementById("doUploadBtn");
-  const adminLogoutBtn     = document.getElementById("adminLogoutBtn");
-  const uploadMsg          = document.getElementById("uploadMsg");
-  const uploadArea         = document.getElementById("uploadArea");
-  const progressBar        = document.getElementById("progressBar");
-  const progressFill       = document.getElementById("progressFill");
-  const lightboxEl         = document.getElementById("lightboxEl");
-  const lbOverlay          = document.getElementById("lbOverlay");
-  const lbMediaWrap        = document.getElementById("lbMediaWrap");
-  const lbCaption          = document.getElementById("lbCaption");
-  const lbDownloadBtn      = document.getElementById("lbDownloadBtn");
-  const lbDeleteBtn        = document.getElementById("lbDeleteBtn");
-  const lbCloseBtn         = document.getElementById("lbCloseBtn");
-  const deleteModal        = document.getElementById("deleteModal");
-  const deleteOverlay      = document.getElementById("deleteOverlay");
-  const deleteModalTitle   = document.getElementById("deleteModalTitle");
-  const deleteModalDesc    = document.getElementById("deleteModalDesc");
-  const deleteModalWarning = document.getElementById("deleteModalWarning");
-  const deleteModalMsg     = document.getElementById("deleteModalMsg");
-  const deleteModalActions = document.getElementById("deleteModalActions");
-  const deleteCancelBtn    = document.getElementById("deleteCancelBtn");
-  const deleteConfirmBtn   = document.getElementById("deleteConfirmBtn");
-
-  if (window.lucide) lucide.createIcons();
-
-  // ── Music ──
-  const audio        = document.getElementById("bgMusic");
-  const playPauseBtn = document.getElementById("playPauseBtn");
-  const waveform     = document.getElementById("waveform");
-  const volSlider    = document.getElementById("volSlider");
-  audio.volume = 0.6;
-  let playing = false;
-
-  function setPlaying(state) {
-    playing = state;
-    if (state) {
-      audio.play().catch(() => {});
-      playPauseBtn.innerHTML = "&#9646;&#9646;";
-      playPauseBtn.classList.add("active");
-      waveform.classList.remove("paused");
-    } else {
-      audio.pause();
-      playPauseBtn.innerHTML = "&#9654;";
-      playPauseBtn.classList.remove("active");
-      waveform.classList.add("paused");
-    }
-  }
-  playPauseBtn.addEventListener("click", () => setPlaying(!playing));
-  volSlider.addEventListener("input", () => { audio.volume = parseFloat(volSlider.value); });
-  document.addEventListener("click", function startOnInteraction() {
-    if (!playing) setPlaying(true);
-    document.removeEventListener("click", startOnInteraction);
+async function dbSelect(query = "") {
+  const r = await fetch(`${SB_URL}/rest/v1/photos?select=*&order=uploaded_at.desc${query}`, { headers: sbHeaders });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function dbInsert(row) {
+  const r = await fetch(`${SB_URL}/rest/v1/photos`, {
+    method: "POST", headers: { ...sbHeaders, "Prefer": "return=representation" },
+    body: JSON.stringify(row)
   });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function dbDelete(id) {
+  const r = await fetch(`${SB_URL}/rest/v1/photos?id=eq.${id}`, { method: "DELETE", headers: sbHeaders });
+  if (!r.ok) throw new Error(await r.text());
+}
+async function storageUpload(path, file) {
+  const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
+    method: "POST",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY,
+               "Content-Type": file.type, "Cache-Control": "3600", "x-upsert": "false" },
+    body: file
+  });
+  if (!r.ok) throw new Error((await r.json()).error || "Upload failed");
+}
+async function storageDelete(path) {
+  const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}`, {
+    method: "DELETE", headers: { ...sbHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefixes: [path] })
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+function storageUrl(path) {
+  return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+function thumbUrl(src, width = 320) {
+  // Supabase image transform — much smaller file than original
+  try {
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const idx = src.indexOf(marker);
+    if (idx === -1) return src;
+    const fp = src.slice(idx + marker.length).split("?")[0];
+    return `${SB_URL}/storage/v1/render/image/public/${BUCKET}/${fp}?width=${width}&quality=65&resize=cover`;
+  } catch { return src; }
+}
+function tinyUrl(src) { return thumbUrl(src, 20); } // 20px blur placeholder
 
-  // ── Thumbnail URL helper using Supabase image transform ──
-  // This requests a small 400px-wide version for the grid, loading much faster
-  function getThumbnailUrl(src, width = 400) {
-    try {
-      // Supabase storage transform: append render=image&width=N to public URL
-      const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
-      const idx = src.indexOf(marker);
-      if (idx === -1) return src; // fallback: use original
-      const filePath = src.slice(idx + marker.length).split("?")[0];
-      return `${SUPABASE_URL}/storage/v1/render/image/public/${STORAGE_BUCKET}/${filePath}?width=${width}&quality=70&resize=cover`;
-    } catch {
-      return src;
-    }
-  }
+// ── State ──
+let photos = [], currentFilter = "all", isAdmin = false, pendingFiles = [], currentLbItem = null, pendingDeleteItem = null;
+let myUploads     = JSON.parse(localStorage.getItem("my_uploaded_photos") || "[]");
+let myUploadPaths = JSON.parse(localStorage.getItem("my_uploaded_photo_paths") || "[]");
 
-  // ── Skeleton placeholders — show immediately while data loads ──
-  function showSkeletons(count = 12) {
-    grid.innerHTML = "";
-    for (let i = 0; i < count; i++) {
-      const sk = document.createElement("div");
-      sk.className = "skeleton-card";
-      sk.innerHTML = `<div class="skeleton-img"></div><div class="skeleton-info"></div>`;
-      grid.appendChild(sk);
-    }
-    grid.style.display = "grid";
-    loadingState.style.display = "none";
-  }
+// ── DOM ──
+const grid            = document.getElementById("photoGrid");
+const filtersEl       = document.getElementById("filters");
+const povSection      = document.getElementById("povSection");
+const povZone         = document.getElementById("povZone");
+const povInput        = document.getElementById("povInput");
+const povMsg          = document.getElementById("povMsg");
+const adminToggleBtn  = document.getElementById("adminToggleBtn");
+const adminModal      = document.getElementById("adminModal");
+const adminLoginView  = document.getElementById("adminLoginView");
+const adminUploadView = document.getElementById("adminUploadView");
+const adminPwInput    = document.getElementById("adminPasswordInput");
+const pwToggleBtn     = document.getElementById("passwordToggleBtn");
+const loginBtn        = document.getElementById("adminLoginBtn");
+const cancelBtn       = document.getElementById("adminCancelBtn");
+const loginMsg        = document.getElementById("loginMsg");
+const catSelect       = document.getElementById("uploadCategory");
+const capInput        = document.getElementById("uploadCaption");
+const fileInput       = document.getElementById("adminFileInput");
+const filePreview     = document.getElementById("filePreview");
+const uploadBtn       = document.getElementById("doUploadBtn");
+const logoutBtn       = document.getElementById("adminLogoutBtn");
+const uploadMsg       = document.getElementById("uploadMsg");
+const uploadArea      = document.getElementById("uploadArea");
+const progressBar     = document.getElementById("progressBar");
+const progressFill    = document.getElementById("progressFill");
+const lightboxEl      = document.getElementById("lightboxEl");
+const lbOverlay       = document.getElementById("lbOverlay");
+const lbMediaWrap     = document.getElementById("lbMediaWrap");
+const lbCaption       = document.getElementById("lbCaption");
+const lbDownloadBtn   = document.getElementById("lbDownloadBtn");
+const lbDeleteBtn     = document.getElementById("lbDeleteBtn");
+const lbCloseBtn      = document.getElementById("lbCloseBtn");
+const deleteModal     = document.getElementById("deleteModal");
+const deleteOverlay   = document.getElementById("deleteOverlay");
+const deleteModalBox  = document.getElementById("deleteModalBox");
+const delTitle        = document.getElementById("deleteModalTitle");
+const delDesc         = document.getElementById("deleteModalDesc");
+const delWarn         = document.getElementById("deleteModalWarning");
+const delMsg          = document.getElementById("deleteModalMsg");
+const delCancelBtn    = document.getElementById("deleteCancelBtn");
+const delConfirmBtn   = document.getElementById("deleteConfirmBtn");
 
-  // ── IntersectionObserver for true lazy loading ──
-  const imgObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const wrap = entry.target;
-      const fullSrc = wrap.dataset.fullSrc;
-      if (!fullSrc) return;
-      imgObserver.unobserve(wrap);
+// ── Music ──
+const audio        = document.getElementById("bgMusic");
+const playPauseBtn = document.getElementById("playPauseBtn");
+const waveformEl   = document.getElementById("waveform");
+const volSlider    = document.getElementById("volSlider");
+audio.volume = 0.6;
+let playing = false;
+function setPlaying(s) {
+  playing = s;
+  if (s) { audio.play().catch(()=>{}); playPauseBtn.innerHTML="&#9646;&#9646;"; playPauseBtn.classList.add("active"); waveformEl.classList.remove("paused"); }
+  else   { audio.pause(); playPauseBtn.innerHTML="&#9654;"; playPauseBtn.classList.remove("active"); waveformEl.classList.add("paused"); }
+}
+playPauseBtn.addEventListener("click", () => setPlaying(!playing));
+volSlider.addEventListener("input", () => { audio.volume = +volSlider.value; });
+document.addEventListener("click", function autoplay() { if (!playing) setPlaying(true); document.removeEventListener("click", autoplay); });
 
-      const fullImg = wrap.querySelector(".full");
-      const thumbImg = wrap.querySelector(".thumb");
-      if (!fullImg) return;
+// ── Password toggle (inline SVG, no Lucide) ──
+let pwVisible = false;
+const eyeSVG    = `<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke-width:1.8;fill:none;stroke:currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const eyeOffSVG = `<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke-width:1.8;fill:none;stroke:currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+pwToggleBtn.innerHTML = eyeSVG;
+pwToggleBtn.addEventListener("click", () => {
+  pwVisible = !pwVisible;
+  adminPwInput.type = pwVisible ? "text" : "password";
+  pwToggleBtn.innerHTML = pwVisible ? eyeOffSVG : eyeSVG;
+});
 
-      fullImg.src = fullSrc;
-      fullImg.onload = () => {
-        fullImg.classList.add("loaded");
-        if (thumbImg) thumbImg.classList.add("hidden");
-      };
-    });
-  }, { rootMargin: "200px 0px" }); // start loading 200px before entering viewport
+// ── IntersectionObserver lazy load ──
+const imgObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const wrap = e.target;
+    imgObserver.unobserve(wrap);
+    const fullSrc = wrap.dataset.fullSrc;
+    if (!fullSrc) return;
+    const full  = wrap.querySelector(".full");
+    const thumb = wrap.querySelector(".thumb");
+    if (!full) return;
+    full.src = fullSrc;
+    full.onload = () => { full.classList.add("loaded"); if (thumb) thumb.classList.add("hidden"); };
+  });
+}, { rootMargin: "300px 0px" }); // generous head-start
 
-  // ── Load photos ──
-  async function loadPhotos() {
-    showSkeletons(12); // instantly show skeletons
-    try {
-      const { data, error } = await supabaseClient
-        .from("photos").select("*").order("uploaded_at", { ascending: false });
-      if (error) {
-        grid.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+// ── Skeletons ──
+function showSkeletons(n = 12) {
+  grid.innerHTML = Array(n).fill('<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-info"></div></div>').join("");
+  grid.style.display = "grid";
+}
+
+// ── Load photos — cache-first ──
+async function loadPhotos(forceRefresh = false) {
+  // 1. Instantly show cached data if available
+  if (!forceRefresh) {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        photos = JSON.parse(cached);
+        renderGrid();
+        // silently refresh in background
+        fetchAndCache().then(renderGrid).catch(()=>{});
         return;
-      }
-      photos = data.map(row => ({
-        id: row.id, src: row.src_url, caption: row.caption,
-        category: row.category, type: row.media_type, storage_path: row.storage_path
-      }));
-      renderGrid();
-    } catch (err) {
-      grid.innerHTML = `<div class="empty-state">Could not connect. Please refresh.</div>`;
-      console.error(err);
+      } catch {}
     }
   }
+  // 2. No cache — show skeletons then fetch
+  showSkeletons(12);
+  await fetchAndCache();
+  renderGrid();
+}
 
-  // ── Render grid ──
-  function renderGrid() {
-    const filtered = currentFilter === "all" ? photos : photos.filter(p => p.category === currentFilter);
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div class="empty-state">${currentFilter === "pov" ? "No guest photos yet — be the first to share." : "No photos in this category yet."}</div>`;
-      return;
-    }
+async function fetchAndCache() {
+  const rows = await dbSelect();
+  photos = rows.map(r => ({
+    id: r.id, src: r.src_url, caption: r.caption,
+    category: r.category, type: r.media_type, storage_path: r.storage_path
+  }));
+  sessionStorage.setItem(CACHE_KEY, JSON.stringify(photos));
+}
 
-    grid.innerHTML = "";
+// ── Render ──
+function renderGrid() {
+  const filtered = currentFilter === "all" ? photos : photos.filter(p => p.category === currentFilter);
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state">${currentFilter === "pov" ? "No guest photos yet — be the first to share." : "No photos in this category yet."}</div>`;
     grid.style.display = "grid";
-
-    filtered.forEach((item, index) => {
-      const card = document.createElement("article");
-      card.className = "photo-card";
-      // stagger the fade-in animation so cards don't all pop in at once
-      card.style.animationDelay = `${Math.min(index * 40, 400)}ms`;
-
-      const isVideo  = item.type === "video";
-      const canDel   = canDeleteItem(item);
-      const thumbSrc = isVideo ? "" : getThumbnailUrl(item.src, 30);  // tiny blur placeholder
-      const gridSrc  = isVideo ? "" : getThumbnailUrl(item.src, 400); // actual grid size
-
-      if (isVideo) {
-        card.innerHTML = `
-          <div class="img-wrap" data-full-src="${item.src}">
-            <video src="${item.src}" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
-          </div>
-          <div class="info">
-            <span class="caption">${item.caption || capitalize(item.category)}</span>
-            <div class="media-actions">
-              <button class="download-btn">Save</button>
-              <button class="delete-btn" style="opacity:${canDel ? '1' : '0.45'};">Delete</button>
-            </div>
-          </div>`;
-      } else {
-        // blur-up: load a tiny placeholder first, then swap in the real image
-        card.innerHTML = `
-          <div class="img-wrap" data-full-src="${gridSrc}">
-            <img class="thumb" src="${thumbSrc}" alt="" aria-hidden="true" />
-            <img class="full" alt="${item.caption || item.category}" />
-          </div>
-          <div class="info">
-            <span class="caption">${item.caption || capitalize(item.category)}</span>
-            <div class="media-actions">
-              <button class="download-btn">Save</button>
-              <button class="delete-btn" style="opacity:${canDel ? '1' : '0.45'};">Delete</button>
-            </div>
-          </div>`;
-
-        // observe the wrap — load full image only when it enters viewport
-        const wrap = card.querySelector(".img-wrap");
-        imgObserver.observe(wrap);
-      }
-
-      card.querySelector(".img-wrap").addEventListener("click", () => openLightbox(item));
-      card.querySelector(".download-btn").addEventListener("click", e => { e.stopPropagation(); downloadItem(item); });
-      card.querySelector(".delete-btn").addEventListener("click",   e => { e.stopPropagation(); openDeleteModal(item); });
-      grid.appendChild(card);
-    });
+    return;
   }
+  const frag = document.createDocumentFragment();
+  filtered.forEach((item, i) => {
+    const card    = document.createElement("article");
+    card.className = "photo-card";
+    card.style.animationDelay = Math.min(i * 35, 350) + "ms";
+    const isVideo = item.type === "video";
+    const canDel  = canDelete(item);
 
-  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-  // ── Helpers ──
-  function canDeleteItem(item) {
-    if (!item) return false;
-    const path = item.storage_path || getStoragePathFromUrl(item.src);
-    return Boolean(isAdminLoggedIn || myUploads.includes(item.id) || (path && myUploadPaths.includes(path)));
-  }
-
-  function getStoragePath(item) {
-    return item.storage_path || getStoragePathFromUrl(item.src);
-  }
-
-  function getStoragePathFromUrl(url) {
-    try {
-      const parsed = new URL(url);
-      const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
-      const idx = parsed.pathname.indexOf(marker);
-      if (idx === -1) return "";
-      return decodeURIComponent(parsed.pathname.slice(idx + marker.length));
-    } catch {
-      const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
-      const path = url.split(marker)[1];
-      return path ? decodeURIComponent(path.split("?")[0]) : "";
-    }
-  }
-
-  function downloadItem(item) {
-    const a = document.createElement("a");
-    a.href = item.src; // always download original full-res
-    a.download = (item.caption || item.category) + (item.type === "video" ? ".mp4" : ".jpg");
-    a.target = "_blank"; a.click();
-  }
-
-  // ── Delete Modal ──
-  function openDeleteModal(item) {
-    pendingDeleteItem = item;
-    deleteModalMsg.textContent = "";
-    deleteConfirmBtn.disabled = false;
-    deleteConfirmBtn.textContent = "Yes, delete";
-    const allowed = canDeleteItem(item);
-    const hasPath = !!getStoragePath(item);
-    deleteModal.querySelector(".delete-modal-box").classList.remove("dm-not-allowed");
-    deleteModalWarning.style.display = "none";
-    deleteModalWarning.textContent = "";
-    deleteConfirmBtn.style.display = "block";
-    if (!allowed) {
-      deleteModal.querySelector(".delete-modal-box").classList.add("dm-not-allowed");
-      deleteModalTitle.textContent = "Cannot delete";
-      deleteModalDesc.textContent = "Only the browser that originally uploaded this file can delete it.";
-      deleteModalWarning.style.display = "block";
-      deleteModalWarning.textContent = "If you are the admin, please sign in first — then you can delete any photo.";
-      deleteConfirmBtn.style.display = "none";
-    } else if (!hasPath) {
-      deleteModalTitle.textContent = "Cannot delete file";
-      deleteModalDesc.textContent = "This item is missing its storage path and cannot be safely removed.";
-      deleteConfirmBtn.style.display = "none";
+    if (isVideo) {
+      card.innerHTML = `
+        <div class="img-wrap">
+          <video src="${item.src}" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+        </div>`;
     } else {
-      deleteModalTitle.textContent = "Delete this photo?";
-      deleteModalDesc.textContent = "This permanently removes the file from the gallery and storage.";
-      deleteModalWarning.style.display = "block";
-      deleteModalWarning.textContent = "⚠ This action cannot be undone.";
+      card.innerHTML = `
+        <div class="img-wrap" data-full-src="${thumbUrl(item.src)}">
+          <img class="thumb" src="${tinyUrl(item.src)}" alt="" aria-hidden="true" loading="lazy" />
+          <img class="full" alt="${item.caption || item.category}" />
+        </div>`;
+      imgObserver.observe(card.querySelector(".img-wrap"));
     }
-    deleteModal.style.display = "flex";
+
+    card.innerHTML += `
+      <div class="info">
+        <span class="caption">${item.caption || cap(item.category)}</span>
+        <div class="media-actions">
+          <button class="download-btn">Save</button>
+          <button class="delete-btn" style="opacity:${canDel?'1':'0.4'}">Delete</button>
+        </div>
+      </div>`;
+
+    card.querySelector(".img-wrap").addEventListener("click", () => openLightbox(item));
+    card.querySelector(".download-btn").addEventListener("click", e => { e.stopPropagation(); dl(item); });
+    card.querySelector(".delete-btn").addEventListener("click",   e => { e.stopPropagation(); openDelModal(item); });
+    frag.appendChild(card);
+  });
+  grid.innerHTML = "";
+  grid.style.display = "grid";
+  grid.appendChild(frag); // single DOM write = faster
+}
+
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+
+// ── Helpers ──
+function canDelete(item) {
+  if (!item) return false;
+  const path = item.storage_path || pathFromUrl(item.src);
+  return Boolean(isAdmin || myUploads.includes(item.id) || (path && myUploadPaths.includes(path)));
+}
+function pathFromUrl(url) {
+  try {
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const parsed = new URL(url);
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx !== -1) return decodeURIComponent(parsed.pathname.slice(idx + marker.length));
+  } catch {}
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const p = url.split(marker)[1];
+  return p ? decodeURIComponent(p.split("?")[0]) : "";
+}
+function getPath(item) { return item.storage_path || pathFromUrl(item.src); }
+function dl(item) {
+  const a = document.createElement("a");
+  a.href = item.src; a.download = (item.caption || item.category) + (item.type==="video"?".mp4":".jpg"); a.target="_blank"; a.click();
+}
+
+// ── Delete modal ──
+function openDelModal(item) {
+  pendingDeleteItem = item;
+  delMsg.textContent = ""; delConfirmBtn.disabled = false; delConfirmBtn.textContent = "Yes, delete";
+  const allowed = canDelete(item), hasPath = !!getPath(item);
+  deleteModalBox.classList.remove("dm-not-allowed");
+  delWarn.style.display = "none"; delWarn.textContent = "";
+  delConfirmBtn.style.display = "block";
+  if (!allowed) {
+    deleteModalBox.classList.add("dm-not-allowed");
+    delTitle.textContent = "Cannot delete";
+    delDesc.textContent  = "Only the browser that uploaded this file can delete it.";
+    delWarn.style.display = "block";
+    delWarn.textContent   = "Sign in as admin to delete any photo.";
+    delConfirmBtn.style.display = "none";
+  } else if (!hasPath) {
+    delTitle.textContent = "Cannot delete file";
+    delDesc.textContent  = "This item is missing its storage path.";
+    delConfirmBtn.style.display = "none";
+  } else {
+    delTitle.textContent = "Delete this photo?";
+    delDesc.textContent  = "This permanently removes the file from the gallery and storage.";
+    delWarn.style.display = "block";
+    delWarn.textContent   = "⚠ This action cannot be undone.";
   }
+  deleteModal.style.display = "flex";
+}
+function closeDelModal() { deleteModal.style.display = "none"; pendingDeleteItem = null; }
+delCancelBtn.addEventListener("click", closeDelModal);
+deleteOverlay.addEventListener("click", e => { if (e.target === deleteOverlay) closeDelModal(); });
 
-  function closeDeleteModal() { deleteModal.style.display = "none"; pendingDeleteItem = null; }
-  deleteCancelBtn.addEventListener("click", closeDeleteModal);
-  deleteOverlay.addEventListener("click", e => { if (e.target === deleteOverlay) closeDeleteModal(); });
+delConfirmBtn.addEventListener("click", async () => {
+  if (!pendingDeleteItem) return;
+  const item = pendingDeleteItem;
+  if (!canDelete(item)) { openDelModal(item); return; }
+  const path = getPath(item);
+  if (!path) { delMsg.textContent = "Storage path missing."; return; }
+  delConfirmBtn.disabled = true; delConfirmBtn.textContent = "Deleting…"; delCancelBtn.disabled = true;
+  try {
+    await storageDelete(path);
+    await dbDelete(item.id);
+    myUploads     = myUploads.filter(id => id !== item.id);
+    myUploadPaths = myUploadPaths.filter(p => p !== path);
+    localStorage.setItem("my_uploaded_photos", JSON.stringify(myUploads));
+    localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
+    photos = photos.filter(p => p.id !== item.id);
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(photos));
+    closeDelModal(); closeLightbox(); renderGrid();
+  } catch (err) {
+    delMsg.textContent = err.message || "Delete failed.";
+    delConfirmBtn.disabled = false; delConfirmBtn.textContent = "Try again"; delCancelBtn.disabled = false;
+  }
+});
 
-  deleteConfirmBtn.addEventListener("click", async () => {
-    if (!pendingDeleteItem) return;
-    const item = pendingDeleteItem;
-    if (!canDeleteItem(item)) { openDeleteModal(item); return; }
-    const path = getStoragePath(item);
-    if (!path) { deleteModalMsg.textContent = "Storage path missing — file not deleted."; return; }
-    deleteConfirmBtn.disabled = true;
-    deleteConfirmBtn.textContent = "Deleting…";
-    deleteCancelBtn.disabled = true;
-    deleteModalMsg.textContent = "";
+// ── Lightbox ──
+function openLightbox(item) {
+  currentLbItem = item;
+  lbMediaWrap.innerHTML = item.type === "video"
+    ? `<video src="${item.src}" controls autoplay style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;"></video>`
+    : `<img src="${item.src}" alt="${item.caption||''}" style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;" />`;
+  lbCaption.textContent = item.caption || cap(item.category);
+  lbDeleteBtn.style.display = canDelete(item) ? "inline-flex" : "none";
+  lightboxEl.style.display = "block";
+}
+function closeLightbox() { lightboxEl.style.display = "none"; lbMediaWrap.innerHTML = ""; currentLbItem = null; }
+lbCloseBtn.addEventListener("click", closeLightbox);
+lbOverlay.addEventListener("click", e => { if (e.target === lbOverlay) closeLightbox(); });
+lbDownloadBtn.addEventListener("click", () => { if (currentLbItem) dl(currentLbItem); });
+lbDeleteBtn.addEventListener("click", () => { if (currentLbItem) openDelModal(currentLbItem); });
+
+// ── Filters ──
+filtersEl.addEventListener("click", e => {
+  if (!e.target.matches(".chip")) return;
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  e.target.classList.add("active");
+  currentFilter = e.target.dataset.filter;
+  povSection.style.display = currentFilter === "pov" ? "block" : "none";
+  renderGrid();
+});
+
+// ── Admin ──
+adminToggleBtn.addEventListener("click", () => {
+  adminModal.style.display = "flex";
+  adminLoginView.style.display  = isAdmin ? "none" : "block";
+  adminUploadView.style.display = isAdmin ? "block" : "none";
+});
+cancelBtn.addEventListener("click", () => { adminModal.style.display="none"; loginMsg.textContent=""; adminPwInput.value=""; });
+loginBtn.addEventListener("click", () => {
+  if (!adminPwInput.value.trim()) { loginMsg.textContent="Please enter the admin password."; return; }
+  if (adminPwInput.value === ADMIN_PW) {
+    isAdmin = true; adminLoginView.style.display="none"; adminUploadView.style.display="block"; loginMsg.textContent=""; renderGrid();
+  } else { loginMsg.textContent="Wrong password."; adminPwInput.value=""; }
+});
+adminPwInput.addEventListener("keydown", e => { if (e.key==="Enter") loginBtn.click(); });
+logoutBtn.addEventListener("click", () => { isAdmin=false; adminModal.style.display="none"; pendingFiles=[]; filePreview.innerHTML=""; renderGrid(); });
+uploadArea.addEventListener("click", e => { if (e.target!==fileInput) fileInput.click(); });
+fileInput.addEventListener("change", () => {
+  const all = Array.from(fileInput.files);
+  pendingFiles = all.filter(f => f.size <= 100*1024*1024);
+  filePreview.innerHTML = pendingFiles.map(f=>`<span class="file-tag">${f.name}</span>`).join("");
+  const sk = all.length - pendingFiles.length;
+  uploadMsg.textContent = sk>0 ? `${sk} file(s) skipped — over 100MB.` : "";
+  uploadMsg.className = "form-msg";
+});
+
+uploadBtn.addEventListener("click", async () => {
+  if (!pendingFiles.length) { uploadMsg.textContent="Please select at least one file."; return; }
+  uploadBtn.disabled=true; uploadBtn.textContent="Uploading…";
+  progressBar.style.display="block"; progressFill.style.width="0%"; uploadMsg.textContent="";
+  const category=catSelect.value, caption=capInput.value.trim();
+  let done=0;
+  for (const file of pendingFiles) {
+    const ext  = file.name.split(".").pop();
+    const path = `${category}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const mtype = file.type.startsWith("video") ? "video" : "image";
     try {
-      const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).remove([path]);
-      if (storageError) throw new Error("Storage error: " + storageError.message);
-      const { error: dbError } = await supabaseClient.from("photos").delete().eq("id", item.id);
-      if (dbError) throw new Error("Database error: " + dbError.message);
-      myUploads     = myUploads.filter(id => id !== item.id);
-      myUploadPaths = myUploadPaths.filter(p => p !== path);
-      localStorage.setItem("my_uploaded_photos", JSON.stringify(myUploads));
-      localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
-      photos = photos.filter(p => p.id !== item.id);
-      closeDeleteModal();
-      closeLightbox();
-      renderGrid();
-    } catch (err) {
-      deleteModalMsg.textContent = err.message || "Delete failed. Please try again.";
-      deleteConfirmBtn.disabled = false;
-      deleteConfirmBtn.textContent = "Try again";
-      deleteCancelBtn.disabled = false;
-    }
-  });
-
-  // ── Lightbox ──
-  function openLightbox(item) {
-    currentLbItem = item;
-    // lightbox always shows original full-res
-    lbMediaWrap.innerHTML = item.type === "video"
-      ? `<video src="${item.src}" controls style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;" autoplay></video>`
-      : `<img src="${item.src}" alt="${item.caption||''}" style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;" />`;
-    lbCaption.textContent = item.caption || capitalize(item.category);
-    lbDeleteBtn.style.display = canDeleteItem(item) ? "inline-flex" : "none";
-    lightboxEl.style.display = "block";
+      await storageUpload(path, file);
+      const src_url = storageUrl(path);
+      await dbInsert({ src_url, category, caption, media_type: mtype, storage_path: path });
+      done++; progressFill.style.width = Math.round(done/pendingFiles.length*100)+"%";
+    } catch(err) { uploadMsg.textContent=err.message; uploadMsg.className="form-msg"; break; }
   }
-  function closeLightbox() { lightboxEl.style.display = "none"; lbMediaWrap.innerHTML = ""; currentLbItem = null; }
-  lbCloseBtn.addEventListener("click", closeLightbox);
-  lbOverlay.addEventListener("click", e => { if (e.target === lbOverlay) closeLightbox(); });
-  lbDownloadBtn.addEventListener("click", () => { if (currentLbItem) downloadItem(currentLbItem); });
-  lbDeleteBtn.addEventListener("click", () => { if (currentLbItem) openDeleteModal(currentLbItem); });
-
-  // ── Filters ──
-  filtersEl.addEventListener("click", e => {
-    if (!e.target.matches(".chip")) return;
-    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-    e.target.classList.add("active");
-    currentFilter = e.target.dataset.filter;
-    povSection.style.display = currentFilter === "pov" ? "block" : "none";
-    renderGrid();
-  });
-
-  // ── Admin ──
-  adminToggleBtn.addEventListener("click", () => {
-    adminModal.style.display = "flex";
-    if (isAdminLoggedIn) { adminLoginView.style.display = "none"; adminUploadView.style.display = "block"; }
-    else { adminLoginView.style.display = "block"; adminUploadView.style.display = "none"; }
-  });
-  adminCancelBtn.addEventListener("click", () => { adminModal.style.display = "none"; loginMsg.textContent = ""; adminPasswordInput.value = ""; });
-  adminLoginBtn.addEventListener("click", () => {
-    if (!adminPasswordInput.value.trim()) { loginMsg.textContent = "Please enter the admin password."; return; }
-    if (adminPasswordInput.value === ADMIN_PASS) {
-      isAdminLoggedIn = true;
-      adminLoginView.style.display = "none"; adminUploadView.style.display = "block"; loginMsg.textContent = "";
-      renderGrid();
-    } else { loginMsg.textContent = "Wrong password. Try again."; adminPasswordInput.value = ""; }
-  });
-  adminPasswordInput.addEventListener("keydown", e => { if (e.key === "Enter") adminLoginBtn.click(); });
-  passwordToggleBtn.addEventListener("click", () => {
-    const hide = adminPasswordInput.type === "password";
-    adminPasswordInput.type = hide ? "text" : "password";
-    passwordToggleBtn.setAttribute("aria-label", hide ? "Hide password" : "Show password");
-    passwordToggleBtn.innerHTML = `<i data-lucide="${hide ? "eye-off" : "eye"}"></i>`;
-    if (window.lucide) lucide.createIcons();
-  });
-  adminLogoutBtn.addEventListener("click", () => {
-    isAdminLoggedIn = false; adminModal.style.display = "none";
-    pendingFiles = []; filePreview.innerHTML = ""; renderGrid();
-  });
-
-  uploadArea.addEventListener("click", e => { if (e.target !== adminFileInput) adminFileInput.click(); });
-  adminFileInput.addEventListener("change", () => {
-    const all = Array.from(adminFileInput.files);
-    pendingFiles = all.filter(f => f.size <= 100 * 1024 * 1024);
-    const skipped = all.length - pendingFiles.length;
-    filePreview.innerHTML = pendingFiles.map(f => `<span class="file-tag">${f.name}</span>`).join("");
-    uploadMsg.textContent = skipped > 0 ? `${skipped} file(s) skipped — over 100MB.` : "";
-    uploadMsg.className = "form-msg";
-  });
-
-  doUploadBtn.addEventListener("click", async () => {
-    if (pendingFiles.length === 0) { uploadMsg.textContent = "Please select at least one file."; return; }
-    doUploadBtn.disabled = true; doUploadBtn.textContent = "Uploading…";
-    progressBar.style.display = "block"; progressFill.style.width = "0%"; uploadMsg.textContent = "";
-    const category = uploadCategory.value, caption = uploadCaption.value.trim();
-    let done = 0;
-    for (const file of pendingFiles) {
-      const ext = file.name.split(".").pop();
-      const path = `${category}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const mediaType = file.type.startsWith("video") ? "video" : "image";
-      const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
-      if (storageError) { uploadMsg.textContent = `Upload failed: ${storageError.message}`; uploadMsg.className = "form-msg"; break; }
-      const { data: urlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-      const { error: dbError } = await supabaseClient.from("photos").insert({ src_url: urlData.publicUrl, category, caption, media_type: mediaType, storage_path: path });
-      if (dbError) { uploadMsg.textContent = `DB error: ${dbError.message}`; uploadMsg.className = "form-msg"; break; }
-      done++; progressFill.style.width = Math.round((done / pendingFiles.length) * 100) + "%";
-    }
-    if (done === pendingFiles.length) {
-      uploadMsg.textContent = `${done} file(s) added to the gallery!`;
-      uploadMsg.className = "form-msg ok";
-      pendingFiles = []; filePreview.innerHTML = ""; adminFileInput.value = ""; uploadCaption.value = "";
-      await loadPhotos();
-    }
-    doUploadBtn.disabled = false; doUploadBtn.textContent = "Add to Gallery";
-    setTimeout(() => { progressBar.style.display = "none"; }, 1000);
-  });
-
-  // ── POV upload ──
-  povZone.addEventListener("click", e => { if (e.target !== povInput) povInput.click(); });
-  povInput.addEventListener("change", async () => {
-    const files = Array.from(povInput.files);
-    const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
-    const skipped = files.length - valid.length;
-    if (valid.length === 0) { povMsg.textContent = "All files are over 10MB. Please try smaller ones."; return; }
-    povMsg.textContent = "Uploading…";
-    let done = 0;
-    for (const file of valid) {
-      const ext = file.name.split(".").pop();
-      const path = `pov/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const mediaType = file.type.startsWith("video") ? "video" : "image";
-      const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
-      if (storageError) { console.error(storageError); continue; }
-      const { data: urlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-      const { data: dbRows, error: dbError } = await supabaseClient
-        .from("photos")
-        .insert({ src_url: urlData.publicUrl, category: "pov", caption: "Guest photo", media_type: mediaType, storage_path: path })
-        .select("id");
-      if (!dbError) {
-        if (dbRows && dbRows[0]) { myUploads.push(dbRows[0].id); localStorage.setItem("my_uploaded_photos", JSON.stringify(myUploads)); }
-        myUploadPaths.push(path);
-        localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
-        done++;
-      }
-    }
-    povMsg.textContent = done > 0
-      ? `${done} photo(s) shared — thank you!${skipped > 0 ? ` (${skipped} skipped, over 10MB)` : ""}`
-      : "Upload failed. Please try again.";
-    povInput.value = "";
-    if (done > 0) await loadPhotos();
-  });
-
-  // ── Falling petals ──
-  const petalLayer  = document.getElementById("petals");
-  const petalColors = ["#e8c5b4","#d4a898","#c47a5e","#f2e8e0","#b89a8a"];
-  function createPetal() {
-    const p = document.createElement("div");
-    p.className = "petal";
-    p.style.left = Math.random() * 100 + "vw";
-    p.style.background = petalColors[Math.floor(Math.random() * petalColors.length)];
-    p.style.animationDuration = (7 + Math.random() * 6) + "s";
-    p.style.width  = (5 + Math.random() * 5) + "px";
-    p.style.height = (7 + Math.random() * 6) + "px";
-    petalLayer.appendChild(p);
-    setTimeout(() => p.remove(), 13000);
+  if (done===pendingFiles.length) {
+    uploadMsg.textContent=`${done} file(s) added!`; uploadMsg.className="form-msg ok";
+    pendingFiles=[]; filePreview.innerHTML=""; fileInput.value=""; capInput.value="";
+    sessionStorage.removeItem(CACHE_KEY); // bust cache
+    await loadPhotos(true);
   }
-  setInterval(createPetal, 1800);
+  uploadBtn.disabled=false; uploadBtn.textContent="Add to Gallery";
+  setTimeout(()=>{ progressBar.style.display="none"; },1000);
+});
 
-  // ── Boot ──
-  loadPhotos();
+// ── POV upload ──
+povZone.addEventListener("click", e => { if (e.target!==povInput) povInput.click(); });
+povInput.addEventListener("change", async () => {
+  const files = Array.from(povInput.files);
+  const valid = files.filter(f => f.size<=10*1024*1024);
+  if (!valid.length) { povMsg.textContent="All files are over 10MB."; return; }
+  povMsg.textContent="Uploading…";
+  let done=0;
+  for (const file of valid) {
+    const ext  = file.name.split(".").pop();
+    const path = `pov/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const mtype = file.type.startsWith("video") ? "video" : "image";
+    try {
+      await storageUpload(path, file);
+      const src_url = storageUrl(path);
+      const rows = await dbInsert({ src_url, category:"pov", caption:"Guest photo", media_type:mtype, storage_path:path });
+      if (rows?.[0]?.id) { myUploads.push(rows[0].id); localStorage.setItem("my_uploaded_photos", JSON.stringify(myUploads)); }
+      myUploadPaths.push(path); localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
+      done++;
+    } catch(err) { console.error(err); }
+  }
+  const sk = files.length - valid.length;
+  povMsg.textContent = done>0 ? `${done} photo(s) shared — thank you!${sk>0?` (${sk} skipped, over 10MB)`:""}` : "Upload failed.";
+  povInput.value="";
+  if (done>0) { sessionStorage.removeItem(CACHE_KEY); await loadPhotos(true); }
+});
+
+// ── Petals ──
+const petalLayer  = document.getElementById("petals");
+const petalColors = ["#e8c5b4","#d4a898","#c47a5e","#f2e8e0","#b89a8a"];
+function mkPetal() {
+  const p = document.createElement("div"); p.className="petal";
+  p.style.left=Math.random()*100+"vw";
+  p.style.background=petalColors[Math.random()*5|0];
+  p.style.animationDuration=(7+Math.random()*6)+"s";
+  p.style.width=(5+Math.random()*5)+"px"; p.style.height=(7+Math.random()*6)+"px";
+  petalLayer.appendChild(p); setTimeout(()=>p.remove(),13000);
+}
+setInterval(mkPetal, 1800);
+
+// ── Boot ──
+showSkeletons(12); // paint skeletons immediately, before any network
+loadPhotos();
 </script>
 </body>
 </html>
