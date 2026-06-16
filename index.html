@@ -599,7 +599,10 @@
   }
   playPauseBtn.addEventListener("click", () => setPlaying(!playing));
   volSlider.addEventListener("input", () => { audio.volume = parseFloat(volSlider.value); });
-  document.addEventListener("click", () => { if (!playing) setPlaying(true); }, { once: true });
+  document.addEventListener("click", function startOnInteraction() {
+  if (!playing) setPlaying(true);
+  document.removeEventListener("click", startOnInteraction);
+});
 
   // ── Load photos ──
   async function loadPhotos() {
