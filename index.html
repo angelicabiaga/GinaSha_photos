@@ -6,13 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Ginar &amp; Shannen — Wedding Gallery</title>
 
+  <!-- DNS prefetch for Supabase storage so image requests start earlier -->
   <link rel="dns-prefetch" href="https://gbekmejcztnuulohjlxv.supabase.co">
   <link rel="preconnect" href="https://gbekmejcztnuulohjlxv.supabase.co" crossorigin>
 
+  <!-- Fonts: swap so text renders immediately with fallback, font loads in background -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+
+  <!-- NO external JS libraries at all — replaced with native fetch() -->
 
   <style>
     :root {
@@ -122,38 +126,12 @@
     @keyframes fadeCard { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
     .photo-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 14px 36px rgba(46,40,32,.12), 0 2px 6px rgba(46,40,32,.06); }
 
-    /* ── Progressive image wrapper ── */
-    /*
-      Strategy:
-      1. Thumb (~80px wide) loads instantly — visible but soft/low-res, slight blur only (2px).
-      2. When the card scrolls into view (300px margin), the full-res src is set.
-      3. Full fades in over the thumb, thumb fades out.
-      Net result: you always see a recognisable image immediately, never a grey box.
-    */
-    .img-wrap {
-      position: relative; width: 100%; aspect-ratio: 4/5;
-      overflow: hidden; background: var(--parchment); cursor: pointer;
-    }
-    .img-wrap .thumb {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover;
-      /* Very slight blur — image is recognisable but slightly soft */
-      filter: blur(2px);
-      transform: scale(1.02); /* hide 2px blur edge */
-      transition: opacity .4s ease, filter .4s ease;
-      will-change: opacity, filter;
-    }
-    .img-wrap .full {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity .4s ease;
-      will-change: opacity;
-    }
-    /* Once full image loads: show it, sharpen thumb under it */
-    .img-wrap.full-loaded .full  { opacity: 1; }
-    .img-wrap.full-loaded .thumb { opacity: 0; }
-
+    /* ── Blur-up image wrapper ── */
+    .img-wrap { position: relative; width: 100%; aspect-ratio: 4/5; overflow: hidden; background: var(--parchment); cursor: pointer; }
+    .img-wrap .thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(10px); transform: scale(1.05); transition: opacity .3s; }
+    .img-wrap .full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
+    .img-wrap .full.loaded { opacity: 1; }
+    .img-wrap .thumb.hidden { opacity: 0; }
     .img-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
     .photo-card .info { padding: 10px 14px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); }
@@ -294,6 +272,7 @@
         <div class="password-wrap">
           <input type="password" id="adminPasswordInput" placeholder="Admin password" />
           <button class="password-toggle" id="passwordToggleBtn" type="button" aria-label="Show password">
+            <!-- Eye icon inline — no Lucide library needed -->
             <svg id="eyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
@@ -370,9 +349,9 @@ const SB_URL    = "https://gbekmejcztnuulohjlxv.supabase.co";
 const SB_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZWttZWpjenRudXVsb2hqbHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MjcxMDQsImV4cCI6MjA5NzEwMzEwNH0.IQKyqxCPZSp5JOpTp53iBDoIlaj_Yy8OBS_2G5S6nMg";
 const BUCKET    = "wedding-photos";
 const ADMIN_PW  = "GinaSha123!!";
-const CACHE_KEY = "gs_photos_v1";
+const CACHE_KEY = "gs_photos_v1"; // bump suffix to invalidate cache
 
-// ── Lightweight Supabase REST helpers ──
+// ── Lightweight Supabase REST helpers (replaces 270KB SDK) ──
 const sbHeaders = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
 
 async function dbSelect(query = "") {
@@ -411,28 +390,17 @@ async function storageDelete(path) {
 function storageUrl(path) {
   return `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`;
 }
-
-// ── Image URL helpers ──
-// thumb: small but visible (80px wide) — loads very fast, looks like a real photo
-// full: high quality for the grid (640px) — loads in the background once card is in view
-function thumbUrl(src, width = 80) {
+function thumbUrl(src, width = 320) {
+  // Supabase image transform — much smaller file than original
   try {
     const marker = `/storage/v1/object/public/${BUCKET}/`;
     const idx = src.indexOf(marker);
     if (idx === -1) return src;
     const fp = src.slice(idx + marker.length).split("?")[0];
-    return `${SB_URL}/storage/v1/render/image/public/${BUCKET}/${fp}?width=${width}&quality=50&resize=cover`;
+    return `${SB_URL}/storage/v1/render/image/public/${BUCKET}/${fp}?width=${width}&quality=65&resize=cover`;
   } catch { return src; }
 }
-function fullUrl(src, width = 640) {
-  try {
-    const marker = `/storage/v1/object/public/${BUCKET}/`;
-    const idx = src.indexOf(marker);
-    if (idx === -1) return src;
-    const fp = src.slice(idx + marker.length).split("?")[0];
-    return `${SB_URL}/storage/v1/render/image/public/${BUCKET}/${fp}?width=${width}&quality=80&resize=cover`;
-  } catch { return src; }
-}
+function tinyUrl(src) { return thumbUrl(src, 20); } // 20px blur placeholder
 
 // ── State ──
 let photos = [], currentFilter = "all", isAdmin = false, pendingFiles = [], currentLbItem = null, pendingDeleteItem = null;
@@ -498,7 +466,7 @@ playPauseBtn.addEventListener("click", () => setPlaying(!playing));
 volSlider.addEventListener("input", () => { audio.volume = +volSlider.value; });
 document.addEventListener("click", function autoplay() { if (!playing) setPlaying(true); document.removeEventListener("click", autoplay); });
 
-// ── Password toggle ──
+// ── Password toggle (inline SVG, no Lucide) ──
 let pwVisible = false;
 const eyeSVG    = `<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke-width:1.8;fill:none;stroke:currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const eyeOffSVG = `<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke-width:1.8;fill:none;stroke:currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
@@ -509,22 +477,21 @@ pwToggleBtn.addEventListener("click", () => {
   pwToggleBtn.innerHTML = pwVisible ? eyeOffSVG : eyeSVG;
 });
 
-// ── Progressive image loading via IntersectionObserver ──
-// When a card enters the viewport (with 400px head-start), we swap in the full-res image.
-// The thumb (80px, slightly soft) is always visible immediately — no grey boxes.
-const fullImgObserver = new IntersectionObserver((entries) => {
+// ── IntersectionObserver lazy load ──
+const imgObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (!e.isIntersecting) return;
     const wrap = e.target;
-    fullImgObserver.unobserve(wrap);
+    imgObserver.unobserve(wrap);
     const fullSrc = wrap.dataset.fullSrc;
     if (!fullSrc) return;
-    const fullImg = wrap.querySelector(".full");
-    if (!fullImg) return;
-    fullImg.src = fullSrc;
-    fullImg.onload = () => wrap.classList.add("full-loaded");
+    const full  = wrap.querySelector(".full");
+    const thumb = wrap.querySelector(".thumb");
+    if (!full) return;
+    full.src = fullSrc;
+    full.onload = () => { full.classList.add("loaded"); if (thumb) thumb.classList.add("hidden"); };
   });
-}, { rootMargin: "400px 0px" }); // 400px ahead = loads before user sees card
+}, { rootMargin: "300px 0px" }); // generous head-start
 
 // ── Skeletons ──
 function showSkeletons(n = 12) {
@@ -534,17 +501,20 @@ function showSkeletons(n = 12) {
 
 // ── Load photos — cache-first ──
 async function loadPhotos(forceRefresh = false) {
+  // 1. Instantly show cached data if available
   if (!forceRefresh) {
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
       try {
         photos = JSON.parse(cached);
         renderGrid();
+        // silently refresh in background
         fetchAndCache().then(renderGrid).catch(()=>{});
         return;
       } catch {}
     }
   }
+  // 2. No cache — show skeletons then fetch
   showSkeletons(12);
   await fetchAndCache();
   renderGrid();
@@ -569,29 +539,24 @@ function renderGrid() {
   }
   const frag = document.createDocumentFragment();
   filtered.forEach((item, i) => {
-    const card     = document.createElement("article");
+    const card    = document.createElement("article");
     card.className = "photo-card";
     card.style.animationDelay = Math.min(i * 35, 350) + "ms";
-    const isVideo  = item.type === "video";
-    const canDel   = canDelete(item);
+    const isVideo = item.type === "video";
+    const canDel  = canDelete(item);
 
     if (isVideo) {
       card.innerHTML = `
         <div class="img-wrap">
-          <video src="${item.src}" muted playsinline preload="metadata"></video>
+          <video src="${item.src}" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
         </div>`;
     } else {
-      // thumb: 80px — tiny file, loads almost instantly, looks like a real photo (slight 2px blur)
-      // full: 640px — loads automatically as card enters viewport, no click needed
-      const tSrc = thumbUrl(item.src, 80);
-      const fSrc = fullUrl(item.src, 640);
       card.innerHTML = `
-        <div class="img-wrap" data-full-src="${fSrc}">
-          <img class="thumb" src="${tSrc}" alt="" loading="lazy" />
+        <div class="img-wrap" data-full-src="${thumbUrl(item.src)}">
+          <img class="thumb" src="${tinyUrl(item.src)}" alt="" aria-hidden="true" loading="lazy" />
           <img class="full" alt="${item.caption || item.category}" />
         </div>`;
-      // Register with observer so full image loads on scroll-into-view
-      // (the element is appended to frag, observer fires once it's in the DOM)
+      imgObserver.observe(card.querySelector(".img-wrap"));
     }
 
     card.innerHTML += `
@@ -608,13 +573,9 @@ function renderGrid() {
     card.querySelector(".delete-btn").addEventListener("click",   e => { e.stopPropagation(); openDelModal(item); });
     frag.appendChild(card);
   });
-
   grid.innerHTML = "";
   grid.style.display = "grid";
-  grid.appendChild(frag);
-
-  // Observe all img-wraps now that they're in the DOM
-  grid.querySelectorAll(".img-wrap[data-full-src]").forEach(w => fullImgObserver.observe(w));
+  grid.appendChild(frag); // single DOM write = faster
 }
 
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
@@ -767,7 +728,7 @@ uploadBtn.addEventListener("click", async () => {
   if (done===pendingFiles.length) {
     uploadMsg.textContent=`${done} file(s) added!`; uploadMsg.className="form-msg ok";
     pendingFiles=[]; filePreview.innerHTML=""; fileInput.value=""; capInput.value="";
-    sessionStorage.removeItem(CACHE_KEY);
+    sessionStorage.removeItem(CACHE_KEY); // bust cache
     await loadPhotos(true);
   }
   uploadBtn.disabled=false; uploadBtn.textContent="Add to Gallery";
@@ -815,7 +776,7 @@ function mkPetal() {
 setInterval(mkPetal, 1800);
 
 // ── Boot ──
-showSkeletons(12);
+showSkeletons(12); // paint skeletons immediately, before any network
 loadPhotos();
 </script>
 </body>
