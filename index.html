@@ -167,21 +167,88 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
     .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.9rem; grid-column: 1 / -1; }
 
+    /* ── Skeleton loading cards ── */
+    .skeleton-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(46,40,32,0.07);
+    }
+    .skeleton-img {
+      width: 100%;
+      aspect-ratio: 4/5;
+      background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-info {
+      padding: 10px 14px 12px;
+      height: 38px;
+      background: linear-gradient(90deg, var(--parchment) 25%, #ede5d8 50%, var(--parchment) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite 0.2s;
+      border-top: 1px solid var(--line);
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     /* ── Photo card ── */
     .photo-card {
       background: var(--card); border: 1px solid rgba(255,255,255,0.8);
       border-radius: var(--r); overflow: hidden;
       box-shadow: 0 4px 18px rgba(46,40,32,0.07), 0 1px 3px rgba(46,40,32,0.04);
       transition: transform 0.22s ease, box-shadow 0.22s ease;
+      /* fade in when ready */
+      opacity: 0;
+      animation: fadeCard 0.35s ease forwards;
+    }
+    @keyframes fadeCard {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .photo-card:hover {
       transform: translateY(-4px) scale(1.01);
       box-shadow: 0 14px 36px rgba(46,40,32,0.12), 0 2px 6px rgba(46,40,32,0.06);
     }
-    .photo-card img, .photo-card video {
-      width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
-      background: var(--parchment); cursor: pointer;
+
+    /* ── Image wrapper with blur-up technique ── */
+    .img-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/5;
+      overflow: hidden;
+      background: var(--parchment);
+      cursor: pointer;
     }
+    .img-wrap .thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: blur(12px);
+      transform: scale(1.05);
+      transition: opacity 0.3s ease;
+    }
+    .img-wrap .full {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .img-wrap .full.loaded { opacity: 1; }
+    .img-wrap .thumb.hidden { opacity: 0; }
+    .img-wrap video {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
     .photo-card .info {
       padding: 10px 14px 12px; display: flex; align-items: center;
       justify-content: space-between; gap: 8px; border-top: 1px solid var(--line);
@@ -276,10 +343,7 @@
       padding: 16px; z-index: 300; backdrop-filter: blur(6px);
       animation: fadeInOverlay 0.18s ease;
     }
-    @keyframes fadeInOverlay {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
     .delete-modal-box {
       background: #fffcf8; border-radius: 22px; padding: 28px 24px 22px;
       width: min(100%, 400px);
@@ -300,9 +364,7 @@
       font-family: 'Cormorant Garamond', serif; font-size: 1.55rem;
       font-weight: 400; color: var(--ink); margin-bottom: 8px;
     }
-    .delete-modal-box .dm-desc {
-      font-size: 0.85rem; color: var(--muted); line-height: 1.55; margin-bottom: 6px;
-    }
+    .delete-modal-box .dm-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.55; margin-bottom: 6px; }
     .delete-modal-box .dm-warning {
       font-size: 0.78rem; color: #b35449; background: #fdf3f2;
       border: 1px solid rgba(179,84,73,0.2); border-radius: 10px;
@@ -370,15 +432,12 @@
 </head>
 <body>
 
-<!-- Falling petals -->
 <div class="petals" id="petals"></div>
 
-<!-- Audio -->
 <audio id="bgMusic" loop>
   <source src="song.mp3" type="audio/mpeg">
 </audio>
 
-<!-- Music bar -->
 <div class="music-bar" id="musicBar">
   <div class="waveform" id="waveform">
     <span></span><span></span><span></span><span></span><span></span>
@@ -408,7 +467,6 @@
     <p class="date-line">View &amp; share our memories</p>
   </header>
 
-  <!-- Filter chips — Bride & Groom removed -->
   <div class="controls" id="filters">
     <button class="chip active" data-filter="all">All</button>
     <button class="chip" data-filter="preparation">Pre-ceremony</button>
@@ -417,7 +475,6 @@
     <button class="chip" data-filter="pov">Your POV</button>
   </div>
 
-  <!-- Guest POV upload -->
   <div id="povSection" style="display:none;">
     <div class="pov-zone" id="povZone">
       <input type="file" id="povInput" accept="image/*,video/*" multiple />
@@ -426,11 +483,10 @@
     <div class="pov-msg" id="povMsg"></div>
   </div>
 
-  <div id="loadingState" class="loading-state">Loading photos…</div>
-  <div class="grid" id="photoGrid" style="display:none;"></div>
+  <div id="loadingState" class="loading-state" style="display:none;"></div>
+  <div class="grid" id="photoGrid"></div>
 </main>
 
-<!-- Admin button -->
 <button class="admin-toggle" id="adminToggleBtn">Admin</button>
 
 <!-- Admin modal -->
@@ -483,7 +539,6 @@
   <div class="delete-modal-overlay" id="deleteOverlay">
     <div class="delete-modal-box" id="deleteModalBox">
       <div class="delete-modal-icon" id="deleteModalIcon">
-        <!-- trash icon injected by JS -->
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       </div>
       <h2 id="deleteModalTitle">Delete this photo?</h2>
@@ -562,7 +617,6 @@
   const lbDownloadBtn      = document.getElementById("lbDownloadBtn");
   const lbDeleteBtn        = document.getElementById("lbDeleteBtn");
   const lbCloseBtn         = document.getElementById("lbCloseBtn");
-  // Delete modal
   const deleteModal        = document.getElementById("deleteModal");
   const deleteOverlay      = document.getElementById("deleteOverlay");
   const deleteModalTitle   = document.getElementById("deleteModalTitle");
@@ -573,7 +627,6 @@
   const deleteCancelBtn    = document.getElementById("deleteCancelBtn");
   const deleteConfirmBtn   = document.getElementById("deleteConfirmBtn");
 
-  // ── Lucide icons ──
   if (window.lucide) lucide.createIcons();
 
   // ── Music ──
@@ -601,26 +654,78 @@
   playPauseBtn.addEventListener("click", () => setPlaying(!playing));
   volSlider.addEventListener("input", () => { audio.volume = parseFloat(volSlider.value); });
   document.addEventListener("click", function startOnInteraction() {
-  if (!playing) setPlaying(true);
-  document.removeEventListener("click", startOnInteraction);
-});
+    if (!playing) setPlaying(true);
+    document.removeEventListener("click", startOnInteraction);
+  });
+
+  // ── Thumbnail URL helper using Supabase image transform ──
+  // This requests a small 400px-wide version for the grid, loading much faster
+  function getThumbnailUrl(src, width = 400) {
+    try {
+      // Supabase storage transform: append render=image&width=N to public URL
+      const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+      const idx = src.indexOf(marker);
+      if (idx === -1) return src; // fallback: use original
+      const filePath = src.slice(idx + marker.length).split("?")[0];
+      return `${SUPABASE_URL}/storage/v1/render/image/public/${STORAGE_BUCKET}/${filePath}?width=${width}&quality=70&resize=cover`;
+    } catch {
+      return src;
+    }
+  }
+
+  // ── Skeleton placeholders — show immediately while data loads ──
+  function showSkeletons(count = 12) {
+    grid.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const sk = document.createElement("div");
+      sk.className = "skeleton-card";
+      sk.innerHTML = `<div class="skeleton-img"></div><div class="skeleton-info"></div>`;
+      grid.appendChild(sk);
+    }
+    grid.style.display = "grid";
+    loadingState.style.display = "none";
+  }
+
+  // ── IntersectionObserver for true lazy loading ──
+  const imgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const wrap = entry.target;
+      const fullSrc = wrap.dataset.fullSrc;
+      if (!fullSrc) return;
+      imgObserver.unobserve(wrap);
+
+      const fullImg = wrap.querySelector(".full");
+      const thumbImg = wrap.querySelector(".thumb");
+      if (!fullImg) return;
+
+      fullImg.src = fullSrc;
+      fullImg.onload = () => {
+        fullImg.classList.add("loaded");
+        if (thumbImg) thumbImg.classList.add("hidden");
+      };
+    });
+  }, { rootMargin: "200px 0px" }); // start loading 200px before entering viewport
 
   // ── Load photos ──
   async function loadPhotos() {
-    loadingState.style.display = "block";
-    grid.style.display = "none";
+    showSkeletons(12); // instantly show skeletons
     try {
       const { data, error } = await supabaseClient
         .from("photos").select("*").order("uploaded_at", { ascending: false });
-      if (error) { loadingState.textContent = "Error: " + error.message; return; }
+      if (error) {
+        grid.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+        return;
+      }
       photos = data.map(row => ({
         id: row.id, src: row.src_url, caption: row.caption,
         category: row.category, type: row.media_type, storage_path: row.storage_path
       }));
-      loadingState.style.display = "none";
-      grid.style.display = "grid";
       renderGrid();
-    } catch (err) { loadingState.textContent = "Could not connect."; console.error(err); }
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state">Could not connect. Please refresh.</div>`;
+      console.error(err);
+    }
   }
 
   // ── Render grid ──
@@ -630,26 +735,56 @@
       grid.innerHTML = `<div class="empty-state">${currentFilter === "pov" ? "No guest photos yet — be the first to share." : "No photos in this category yet."}</div>`;
       return;
     }
+
     grid.innerHTML = "";
-    filtered.forEach(item => {
+    grid.style.display = "grid";
+
+    filtered.forEach((item, index) => {
       const card = document.createElement("article");
       card.className = "photo-card";
-      const isVideo = item.type === "video";
-      const canDel = canDeleteItem(item);
-      card.innerHTML = `
-        ${isVideo
-          ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
-          : `<img src="${item.src}" alt="${item.caption || item.category}" loading="lazy" />`}
-        <div class="info">
-          <span class="caption">${item.caption || capitalize(item.category)}</span>
-          <div class="media-actions">
-            <button class="download-btn" title="Download">Save</button>
-            <button class="delete-btn" title="Delete" style="opacity:${canDel ? '1' : '0.45'};">Delete</button>
+      // stagger the fade-in animation so cards don't all pop in at once
+      card.style.animationDelay = `${Math.min(index * 40, 400)}ms`;
+
+      const isVideo  = item.type === "video";
+      const canDel   = canDeleteItem(item);
+      const thumbSrc = isVideo ? "" : getThumbnailUrl(item.src, 30);  // tiny blur placeholder
+      const gridSrc  = isVideo ? "" : getThumbnailUrl(item.src, 400); // actual grid size
+
+      if (isVideo) {
+        card.innerHTML = `
+          <div class="img-wrap" data-full-src="${item.src}">
+            <video src="${item.src}" muted playsinline preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
           </div>
-        </div>`;
-      card.querySelector("img, video").addEventListener("click", () => openLightbox(item));
+          <div class="info">
+            <span class="caption">${item.caption || capitalize(item.category)}</span>
+            <div class="media-actions">
+              <button class="download-btn">Save</button>
+              <button class="delete-btn" style="opacity:${canDel ? '1' : '0.45'};">Delete</button>
+            </div>
+          </div>`;
+      } else {
+        // blur-up: load a tiny placeholder first, then swap in the real image
+        card.innerHTML = `
+          <div class="img-wrap" data-full-src="${gridSrc}">
+            <img class="thumb" src="${thumbSrc}" alt="" aria-hidden="true" />
+            <img class="full" alt="${item.caption || item.category}" />
+          </div>
+          <div class="info">
+            <span class="caption">${item.caption || capitalize(item.category)}</span>
+            <div class="media-actions">
+              <button class="download-btn">Save</button>
+              <button class="delete-btn" style="opacity:${canDel ? '1' : '0.45'};">Delete</button>
+            </div>
+          </div>`;
+
+        // observe the wrap — load full image only when it enters viewport
+        const wrap = card.querySelector(".img-wrap");
+        imgObserver.observe(wrap);
+      }
+
+      card.querySelector(".img-wrap").addEventListener("click", () => openLightbox(item));
       card.querySelector(".download-btn").addEventListener("click", e => { e.stopPropagation(); downloadItem(item); });
-      card.querySelector(".delete-btn").addEventListener("click", e => { e.stopPropagation(); openDeleteModal(item); });
+      card.querySelector(".delete-btn").addEventListener("click",   e => { e.stopPropagation(); openDeleteModal(item); });
       grid.appendChild(card);
     });
   }
@@ -683,7 +818,7 @@
 
   function downloadItem(item) {
     const a = document.createElement("a");
-    a.href = item.src;
+    a.href = item.src; // always download original full-res
     a.download = (item.caption || item.category) + (item.type === "video" ? ".mp4" : ".jpg");
     a.target = "_blank"; a.click();
   }
@@ -694,16 +829,12 @@
     deleteModalMsg.textContent = "";
     deleteConfirmBtn.disabled = false;
     deleteConfirmBtn.textContent = "Yes, delete";
-
     const allowed = canDeleteItem(item);
     const hasPath = !!getStoragePath(item);
-
-    // Reset state
     deleteModal.querySelector(".delete-modal-box").classList.remove("dm-not-allowed");
     deleteModalWarning.style.display = "none";
     deleteModalWarning.textContent = "";
     deleteConfirmBtn.style.display = "block";
-
     if (!allowed) {
       deleteModal.querySelector(".delete-modal-box").classList.add("dm-not-allowed");
       deleteModalTitle.textContent = "Cannot delete";
@@ -721,50 +852,36 @@
       deleteModalWarning.style.display = "block";
       deleteModalWarning.textContent = "⚠ This action cannot be undone.";
     }
-
     deleteModal.style.display = "flex";
   }
 
-  function closeDeleteModal() {
-    deleteModal.style.display = "none";
-    pendingDeleteItem = null;
-  }
-
+  function closeDeleteModal() { deleteModal.style.display = "none"; pendingDeleteItem = null; }
   deleteCancelBtn.addEventListener("click", closeDeleteModal);
   deleteOverlay.addEventListener("click", e => { if (e.target === deleteOverlay) closeDeleteModal(); });
 
   deleteConfirmBtn.addEventListener("click", async () => {
     if (!pendingDeleteItem) return;
     const item = pendingDeleteItem;
-
     if (!canDeleteItem(item)) { openDeleteModal(item); return; }
     const path = getStoragePath(item);
     if (!path) { deleteModalMsg.textContent = "Storage path missing — file not deleted."; return; }
-
     deleteConfirmBtn.disabled = true;
     deleteConfirmBtn.textContent = "Deleting…";
     deleteCancelBtn.disabled = true;
     deleteModalMsg.textContent = "";
-
     try {
       const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).remove([path]);
       if (storageError) throw new Error("Storage error: " + storageError.message);
-
       const { error: dbError } = await supabaseClient.from("photos").delete().eq("id", item.id);
       if (dbError) throw new Error("Database error: " + dbError.message);
-
-      // Update local memory
       myUploads     = myUploads.filter(id => id !== item.id);
       myUploadPaths = myUploadPaths.filter(p => p !== path);
       localStorage.setItem("my_uploaded_photos", JSON.stringify(myUploads));
       localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
-
-      // Instantly remove from local array and re-render — no waiting for network
       photos = photos.filter(p => p.id !== item.id);
       closeDeleteModal();
       closeLightbox();
       renderGrid();
-
     } catch (err) {
       deleteModalMsg.textContent = err.message || "Delete failed. Please try again.";
       deleteConfirmBtn.disabled = false;
@@ -776,6 +893,7 @@
   // ── Lightbox ──
   function openLightbox(item) {
     currentLbItem = item;
+    // lightbox always shows original full-res
     lbMediaWrap.innerHTML = item.type === "video"
       ? `<video src="${item.src}" controls style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;" autoplay></video>`
       : `<img src="${item.src}" alt="${item.caption||''}" style="width:100%;display:block;max-height:72vh;object-fit:contain;background:#111;" />`;
