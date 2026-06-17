@@ -839,12 +839,22 @@
     }
   }
 
-  function downloadItem(item) {
+  async function downloadItem(item) {
+  try {
+    const response = await fetch(item.src);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = item.src; // always download full-res original
+    a.href = url;
     a.download = (item.caption || item.category) + (item.type === "video" ? ".mp4" : ".jpg");
-    a.target = "_blank"; a.click();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } catch (err) {
+    console.error("Download failed:", err);
   }
+}
 
   // ── Delete Modal ──
   function openDeleteModal(item) {
