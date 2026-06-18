@@ -160,6 +160,7 @@
     .pov-zone:hover { border-color: var(--rose); }
     .pov-zone input { display: none; }
     .pov-zone p { font-size: 0.88rem; color: var(--muted); }
+    .pov-zone p.hint { font-size: 0.75rem; color: var(--blush); margin-top: 5px; }
     .pov-msg { text-align: center; font-size: 0.82rem; margin-bottom: 14px; min-height: 18px; color: var(--muted); }
 
     /* ── Grid ── */
@@ -209,7 +210,6 @@
       border-radius: var(--r); overflow: hidden;
       box-shadow: 0 4px 18px rgba(46,40,32,0.07), 0 1px 3px rgba(46,40,32,0.04);
       transition: transform 0.22s ease, box-shadow 0.22s ease;
-      /* Prevent layout shift */
       contain: layout;
     }
     .photo-card:hover {
@@ -217,7 +217,6 @@
       box-shadow: 0 14px 36px rgba(46,40,32,0.12), 0 2px 6px rgba(46,40,32,0.06);
     }
 
-    /* ── Thumb wrapper: fixed aspect-ratio container ── */
     .thumb-wrap {
       width: 100%;
       aspect-ratio: 4/5;
@@ -226,7 +225,6 @@
       background: var(--parchment);
       cursor: pointer;
     }
-    /* Blurred tiny placeholder shown instantly */
     .thumb-placeholder {
       position: absolute;
       inset: 0;
@@ -234,10 +232,9 @@
       height: 100%;
       object-fit: cover;
       filter: blur(12px);
-      transform: scale(1.08); /* hide blur edge artifacts */
+      transform: scale(1.08);
       transition: opacity 0.3s ease;
     }
-    /* Full thumbnail — fades in over placeholder */
     .thumb-img, .thumb-vid {
       position: absolute;
       inset: 0;
@@ -252,7 +249,6 @@
     .thumb-img.loaded + .thumb-placeholder,
     .thumb-vid.loaded + .thumb-placeholder { opacity: 0; }
 
-    /* Video play badge */
     .play-badge {
       position: absolute;
       bottom: 8px; right: 8px;
@@ -332,6 +328,7 @@
     .upload-area:hover { border-color: var(--rose); }
     .upload-area input { display: none; }
     .upload-area p { font-size: 0.85rem; color: var(--muted); }
+    .upload-area p.no-limit { font-size: 0.75rem; color: var(--sage-lt); margin-top: 4px; }
     .file-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .file-tag { font-size: 0.72rem; background: var(--parchment); color: var(--muted); padding: 4px 10px; border-radius: 999px; }
     .btn-primary {
@@ -408,6 +405,49 @@
     .delete-modal-actions .btn-confirm-delete:hover:not(:disabled) { background: #973f36; }
     .delete-modal-actions .btn-confirm-delete:disabled { background: #d9a09a; cursor: not-allowed; }
     .dm-msg { font-size: 0.78rem; color: #b35449; margin-top: 10px; min-height: 16px; }
+
+    /* ── Success Modal ── */
+    .success-modal-overlay {
+      position: fixed; inset: 0; background: rgba(30,24,18,0.75);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; z-index: 400; backdrop-filter: blur(6px);
+      animation: fadeInOverlay 0.2s ease;
+    }
+    .success-modal-box {
+      background: #fffcf8; border-radius: 22px; padding: 36px 28px 28px;
+      width: min(100%, 380px); text-align: center;
+      box-shadow: 0 32px 70px rgba(30,24,18,0.25);
+      animation: slideUp 0.22s ease;
+    }
+    .success-icon-wrap {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #d4edce, #b8ddb0);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .success-icon-wrap svg {
+      width: 30px; height: 30px; stroke: #4a8c3f; stroke-width: 2.5; fill: none;
+    }
+    .success-modal-box h2 {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;
+      font-weight: 400; color: var(--sage); margin-bottom: 10px;
+    }
+    .success-modal-box .sm-desc {
+      font-size: 0.88rem; color: var(--muted); line-height: 1.6; margin-bottom: 6px;
+    }
+    .success-modal-box .sm-count {
+      display: inline-block;
+      font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gold); border: 1px solid var(--gold);
+      border-radius: 999px; padding: 5px 14px; margin: 10px 0 20px;
+    }
+    .success-modal-box .btn-ok {
+      width: 100%; border: none; border-radius: 999px; padding: 13px;
+      font-size: 0.88rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+      font-family: 'Jost', sans-serif; color: #fff; background: var(--rose); cursor: pointer;
+      transition: background 0.15s;
+    }
+    .success-modal-box .btn-ok:hover { background: var(--rose-dk); }
 
     /* ── Lightbox ── */
     .lightbox-overlay {
@@ -496,7 +536,8 @@
   <div id="povSection" style="display:none;">
     <div class="pov-zone" id="povZone">
       <input type="file" id="povInput" accept="image/*,video/*" multiple />
-      <p>Share your photo or video — max 10MB each</p>
+      <p>📷 Share your photos &amp; videos — tap to upload</p>
+      <p class="hint">No file size limit · Photos and videos welcome</p>
     </div>
     <div class="pov-msg" id="povMsg"></div>
   </div>
@@ -539,6 +580,7 @@
         <div class="upload-area" id="uploadArea">
           <input type="file" id="adminFileInput" accept="image/*,video/*" multiple />
           <p>Tap to select photos or videos</p>
+          <p class="no-limit">No file size limit · All formats accepted</p>
           <div class="file-preview" id="filePreview"></div>
         </div>
         <div class="progress-bar" id="progressBar" style="display:none;">
@@ -571,6 +613,21 @@
   </div>
 </div>
 
+<!-- Success Modal -->
+<div id="successModal" style="display:none;">
+  <div class="success-modal-overlay" id="successOverlay">
+    <div class="success-modal-box">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 id="successTitle">Uploaded!</h2>
+      <p class="sm-desc" id="successDesc">Your memories have been added to the gallery.</p>
+      <div class="sm-count" id="successCount"></div>
+      <button class="btn-ok" id="successOkBtn">View in Gallery</button>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div id="lightboxEl" style="display:none;">
   <div class="lightbox-overlay" id="lbOverlay">
@@ -595,10 +652,9 @@
   const STORAGE_BUCKET    = "wedding-photos";
   const ADMIN_PASS        = "GinaSha123!!";
 
-  // Thumbnail dimensions — crisp, small
-  const THUMB_W  = 480;   // px wide (2× for retina)
-  const THUMB_H  = 600;   // px tall
-  const TINY_W   = 20;    // micro placeholder
+  const THUMB_W  = 480;
+  const THUMB_H  = 600;
+  const TINY_W   = 20;
   const TINY_H   = 25;
 
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -650,8 +706,32 @@
   const deleteModalActions = document.getElementById("deleteModalActions");
   const deleteCancelBtn    = document.getElementById("deleteCancelBtn");
   const deleteConfirmBtn   = document.getElementById("deleteConfirmBtn");
+  const successModal       = document.getElementById("successModal");
+  const successOverlay     = document.getElementById("successOverlay");
+  const successTitle       = document.getElementById("successTitle");
+  const successDesc        = document.getElementById("successDesc");
+  const successCount       = document.getElementById("successCount");
+  const successOkBtn       = document.getElementById("successOkBtn");
 
   if (window.lucide) lucide.createIcons();
+
+  // ── Success Modal ──
+  function showSuccessModal({ count, isGuest }) {
+    const label = count === 1 ? "file" : "files";
+    successTitle.textContent = isGuest ? "Thank you! 🎉" : "Upload complete!";
+    successDesc.textContent = isGuest
+      ? "Your memory has been added to our gallery. We're so glad you're here!"
+      : `${count} ${label} successfully added to the gallery.`;
+    successCount.textContent = `${count} ${label} uploaded`;
+    successModal.style.display = "flex";
+  }
+
+  function closeSuccessModal() {
+    successModal.style.display = "none";
+  }
+
+  successOkBtn.addEventListener("click", closeSuccessModal);
+  successOverlay.addEventListener("click", e => { if (e.target === successOverlay) closeSuccessModal(); });
 
   // ── Music ──
   const audio        = document.getElementById("bgMusic");
@@ -683,12 +763,8 @@
   });
 
   // ── Image transform URLs ──
-  // Returns a resized Supabase transform URL for images.
-  // Videos are returned as-is (Supabase doesn't resize video).
   function thumbUrl(item, w, h) {
     if (item.type === "video") return item.src;
-    // Supabase storage image transforms:
-    // /storage/v1/render/image/public/<bucket>/<path>?width=W&height=H&resize=cover&quality=80
     const path = item.storage_path || getStoragePathFromUrl(item.src);
     if (!path) return item.src;
     return `${SUPABASE_URL}/storage/v1/render/image/public/${STORAGE_BUCKET}/${path}?width=${w}&height=${h}&resize=cover&quality=80&format=webp`;
@@ -715,16 +791,15 @@
         mainEl.src = thumbSrc;
         mainEl.addEventListener("load",  () => mainEl.classList.add("loaded"), { once: true });
         mainEl.addEventListener("error", () => {
-          // Fallback to original src if transform fails
           mainEl.src = wrap.dataset.origSrc || thumbSrc;
           mainEl.classList.add("loaded");
         }, { once: true });
       }
       imgObserver.unobserve(wrap);
     });
-  }, { rootMargin: "200px 0px" }); // start loading 200px before entering view
+  }, { rootMargin: "200px 0px" });
 
-  // ── Load photos — show skeletons immediately ──
+  // ── Load photos ──
   async function loadPhotos() {
     renderSkeletons(12);
     try {
@@ -761,7 +836,6 @@
       return;
     }
 
-    // Unobserve existing
     grid.querySelectorAll(".thumb-wrap").forEach(w => imgObserver.unobserve(w));
     grid.innerHTML = "";
 
@@ -774,20 +848,16 @@
       const tSrc    = thumbUrl(item, THUMB_W, THUMB_H);
       const tTiny   = !isVideo ? tinyUrl(item) : "";
 
-      // Build thumb wrap
       const wrap = document.createElement("div");
       wrap.className       = "thumb-wrap";
       wrap.dataset.thumbSrc = tSrc;
       wrap.dataset.origSrc  = item.src;
 
       if (isVideo) {
-        // Videos: no tiny placeholder, just lazy-load with poster thumbnail via first frame
         wrap.innerHTML = `
           <video class="thumb-vid" muted playsinline preload="none"></video>
-          ${canDel ? '' : ''}
           <span class="play-badge">▶ Video</span>`;
       } else {
-        // Images: tiny blurred placeholder shown immediately, full thumb lazy-loads
         wrap.innerHTML = `
           <img class="thumb-img" alt="${item.caption || item.category}" decoding="async" />
           <img class="thumb-placeholder" src="${tTiny}" alt="" aria-hidden="true" />`;
@@ -840,21 +910,21 @@
   }
 
   async function downloadItem(item) {
-  try {
-    const response = await fetch(item.src);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (item.caption || item.category) + (item.type === "video" ? ".mp4" : ".jpg");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  } catch (err) {
-    console.error("Download failed:", err);
+    try {
+      const response = await fetch(item.src);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (item.caption || item.category) + (item.type === "video" ? ".mp4" : ".jpg");
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
   }
-}
 
   // ── Delete Modal ──
   function openDeleteModal(item) {
@@ -924,7 +994,7 @@
     }
   });
 
-  // ── Lightbox — loads FULL res ──
+  // ── Lightbox ──
   function openLightbox(item) {
     currentLbItem = item;
     lbMediaWrap.innerHTML = item.type === "video"
@@ -979,11 +1049,10 @@
   });
   uploadArea.addEventListener("click", e => { if (e.target !== adminFileInput) adminFileInput.click(); });
   adminFileInput.addEventListener("change", () => {
-    const all = Array.from(adminFileInput.files);
-    pendingFiles = all.filter(f => f.size <= 100 * 1024 * 1024);
-    const skipped = all.length - pendingFiles.length;
+    // No size limit — accept all files
+    pendingFiles = Array.from(adminFileInput.files);
     filePreview.innerHTML = pendingFiles.map(f => `<span class="file-tag">${f.name}</span>`).join("");
-    uploadMsg.textContent = skipped > 0 ? `${skipped} file(s) skipped — over 100MB.` : "";
+    uploadMsg.textContent = "";
     uploadMsg.className = "form-msg";
   });
   doUploadBtn.addEventListener("click", async () => {
@@ -991,43 +1060,44 @@
     doUploadBtn.disabled = true; doUploadBtn.textContent = "Uploading…";
     progressBar.style.display = "block"; progressFill.style.width = "0%"; uploadMsg.textContent = "";
     const category = uploadCategory.value, caption = uploadCaption.value.trim();
-    let done = 0;
+    let done = 0, failed = 0;
     for (const file of pendingFiles) {
       const ext = file.name.split(".").pop();
       const path = `${category}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const mediaType = file.type.startsWith("video") ? "video" : "image";
       const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
-      if (storageError) { uploadMsg.textContent = `Upload failed: ${storageError.message}`; uploadMsg.className = "form-msg"; break; }
+      if (storageError) { failed++; uploadMsg.textContent = `Upload failed: ${storageError.message}`; uploadMsg.className = "form-msg"; continue; }
       const { data: urlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
       const { error: dbError } = await supabaseClient.from("photos").insert({ src_url: urlData.publicUrl, category, caption, media_type: mediaType, storage_path: path });
-      if (dbError) { uploadMsg.textContent = `DB error: ${dbError.message}`; uploadMsg.className = "form-msg"; break; }
-      done++; progressFill.style.width = Math.round((done / pendingFiles.length) * 100) + "%";
+      if (dbError) { failed++; uploadMsg.textContent = `DB error: ${dbError.message}`; uploadMsg.className = "form-msg"; continue; }
+      done++;
+      progressFill.style.width = Math.round(((done + failed) / pendingFiles.length) * 100) + "%";
     }
-    if (done === pendingFiles.length) {
-      uploadMsg.textContent = `${done} file(s) added to the gallery!`;
-      uploadMsg.className = "form-msg ok";
-      pendingFiles = []; filePreview.innerHTML = ""; adminFileInput.value = ""; uploadCaption.value = "";
-      await loadPhotos();
-    }
-    doUploadBtn.disabled = false; doUploadBtn.textContent = "Add to Gallery";
+    doUploadBtn.disabled = false;
+    doUploadBtn.textContent = "Add to Gallery";
     setTimeout(() => { progressBar.style.display = "none"; }, 1000);
+    if (done > 0) {
+      pendingFiles = []; filePreview.innerHTML = ""; adminFileInput.value = ""; uploadCaption.value = "";
+      uploadMsg.textContent = "";
+      adminModal.style.display = "none";
+      await loadPhotos();
+      showSuccessModal({ count: done, isGuest: false });
+    }
   });
 
-  // ── POV upload ──
+  // ── POV upload — no size limit ──
   povZone.addEventListener("click", e => { if (e.target !== povInput) povInput.click(); });
   povInput.addEventListener("change", async () => {
     const files = Array.from(povInput.files);
-    const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
-    const skipped = files.length - valid.length;
-    if (valid.length === 0) { povMsg.textContent = "All files are over 10MB. Please try smaller ones."; return; }
-    povMsg.textContent = "Uploading…";
-    let done = 0;
-    for (const file of valid) {
+    if (files.length === 0) return;
+    povMsg.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}… please wait ✨`;
+    let done = 0, failed = 0;
+    for (const file of files) {
       const ext = file.name.split(".").pop();
       const path = `pov/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const mediaType = file.type.startsWith("video") ? "video" : "image";
       const { error: storageError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
-      if (storageError) { console.error(storageError); continue; }
+      if (storageError) { console.error(storageError); failed++; continue; }
       const { data: urlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
       const { data: dbRows, error: dbError } = await supabaseClient
         .from("photos")
@@ -1038,13 +1108,23 @@
         myUploadPaths.push(path);
         localStorage.setItem("my_uploaded_photo_paths", JSON.stringify(myUploadPaths));
         done++;
+      } else {
+        failed++;
       }
     }
-    povMsg.textContent = done > 0
-      ? `${done} photo(s) shared — thank you!${skipped > 0 ? ` (${skipped} skipped, over 10MB)` : ""}`
-      : "Upload failed. Please try again.";
     povInput.value = "";
-    if (done > 0) await loadPhotos();
+    povMsg.textContent = "";
+    if (done > 0) {
+      await loadPhotos();
+      showSuccessModal({ count: done, isGuest: true });
+      if (failed > 0) {
+        setTimeout(() => {
+          povMsg.textContent = `${failed} file${failed > 1 ? 's' : ''} could not be uploaded. Please try again.`;
+        }, 500);
+      }
+    } else {
+      povMsg.textContent = "Upload failed. Please try again.";
+    }
   });
 
   // ── Falling petals ──
