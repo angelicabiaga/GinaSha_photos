@@ -536,7 +536,7 @@
   <div id="povSection" style="display:none;">
     <div class="pov-zone" id="povZone">
       <input type="file" id="povInput" accept="image/*,video/*" multiple />
-      <p>📷 Share your photos &amp; videos — tap to upload</p>
+      <p>Share your photos &amp; videos — tap to upload</p>
       <p class="hint">No file size limit · Photos and videos welcome</p>
     </div>
     <div class="pov-msg" id="povMsg"></div>
@@ -718,7 +718,7 @@
   // ── Success Modal ──
   function showSuccessModal({ count, isGuest }) {
     const label = count === 1 ? "file" : "files";
-    successTitle.textContent = isGuest ? "Thank you! 🎉" : "Upload complete!";
+    successTitle.textContent = isGuest ? "Thank you!" : "Upload complete!";
     successDesc.textContent = isGuest
       ? "Your memory has been added to our gallery. We're so glad you're here!"
       : `${count} ${label} successfully added to the gallery.`;
